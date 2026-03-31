@@ -1,0 +1,2003 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Radio AM — Simulación Tinkercad Mejorada</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Orbitron:wght@400;700;900&display=swap');
+
+:root {
+  --bg:        #0b0d14;
+  --panel:     #131620;
+  --panel2:    #1a1e2e;
+  --panel3:    #1f2438;
+  --border:    #252a3d;
+  --border2:   #303654;
+  --green:     #00e5aa;
+  --green2:    #00b884;
+  --amber:     #ffb300;
+  --amber2:    #cc8f00;
+  --blue:      #4fc3f7;
+  --red:       #ff4d6d;
+  --purple:    #c084fc;
+  --teal:      #5eead4;
+  --dim:       #4a5268;
+  --dim2:      #6b7590;
+  --white:     #e8edf5;
+  --white2:    #b8c0d0;
+  --mono:      'JetBrains Mono', monospace;
+  --display:   'Orbitron', monospace;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{
+  background:var(--bg);
+  font-family:var(--mono);
+  color:var(--white);
+  display:flex;
+  flex-direction:column;
+}
+
+/* ══════════ TOP BAR ══════════ */
+.topbar{
+  background:var(--panel);
+  border-bottom:1px solid var(--border);
+  padding:0 16px;
+  height:50px;
+  display:flex;
+  align-items:center;
+  gap:16px;
+  flex-shrink:0;
+}
+.tb-logo{
+  font-family:var(--display);
+  font-size:13px;
+  font-weight:700;
+  color:var(--green);
+  letter-spacing:2px;
+  white-space:nowrap;
+}
+.tb-sep{width:1px;height:26px;background:var(--border2)}
+.tb-meta{font-size:9px;color:var(--dim2);letter-spacing:1.5px;line-height:1.5}
+.tb-meta span{color:var(--amber)}
+
+.tb-center{flex:1;display:flex;justify-content:center;gap:6px}
+.stage-pill{
+  padding:4px 10px;
+  border-radius:20px;
+  border:1px solid var(--border2);
+  font-size:9px;
+  color:var(--dim2);
+  cursor:pointer;
+  letter-spacing:0.5px;
+  transition:.15s;
+  white-space:nowrap;
+}
+.stage-pill:hover{border-color:var(--dim2);color:var(--white2)}
+.stage-pill.active{color:#000;font-weight:700}
+
+.tb-right{display:flex;gap:8px;align-items:center}
+.tb-indicator{
+  display:flex;align-items:center;gap:5px;
+  font-size:9px;color:var(--dim2);
+}
+.led{width:7px;height:7px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 6px var(--green)}
+.led.off{background:#222;box-shadow:none}
+.pwr-btn{
+  background:none;
+  border:1px solid var(--green);
+  color:var(--green);
+  font-family:var(--mono);
+  font-size:10px;font-weight:700;
+  padding:5px 14px;
+  border-radius:4px;
+  cursor:pointer;
+  letter-spacing:1px;
+  transition:.2s;
+}
+.pwr-btn:hover{background:rgba(0,229,170,.1)}
+.pwr-btn.off{border-color:var(--red);color:var(--red)}
+.pwr-btn.off:hover{background:rgba(255,77,109,.1)}
+
+/* ══════════ MAIN LAYOUT ══════════ */
+.main{
+  flex:1;
+  display:grid;
+  grid-template-columns:260px 1fr 300px;
+  grid-template-rows:1fr;
+  min-height:0;
+}
+
+/* ══════════ LEFT: INSTRUMENTS ══════════ */
+.left-panel{
+  background:var(--panel);
+  border-right:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+.panel-hdr{
+  padding:10px 14px 6px;
+  font-size:9px;
+  color:var(--dim2);
+  letter-spacing:2px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.panel-hdr-dot{width:6px;height:6px;border-radius:50%}
+
+/* Signal Generator */
+.gen-body{padding:10px 12px;border-bottom:1px solid var(--border)}
+
+.gen-screen{
+  background:#040c04;
+  border:1px solid #0a2a0a;
+  border-radius:6px;
+  padding:8px 10px;
+  margin-bottom:10px;
+}
+.gen-screen-row{
+  display:flex;justify-content:space-between;
+  align-items:baseline;
+  margin-bottom:4px;
+}
+.gs-lbl{font-size:8px;color:#2a5a2a;letter-spacing:1px}
+.gs-val{font-family:var(--display);font-size:18px;color:#44ff88}
+.gs-unit{font-size:9px;color:#336633;margin-left:2px}
+.gen-wave{font-size:26px;color:#44ff88;line-height:1}
+.gen-badge{
+  font-size:8px;padding:2px 6px;
+  background:#0a2a0a;border:1px solid #1a4a1a;
+  border-radius:3px;color:#44aa44;letter-spacing:1px;
+}
+
+.ctrl-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.ctrl-lbl{font-size:8px;color:var(--dim2);width:68px;flex-shrink:0;letter-spacing:0.5px}
+.ctrl-val{font-size:9px;font-weight:700;width:38px;text-align:right;flex-shrink:0}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;flex:1;
+  height:3px;background:var(--border2);
+  border-radius:2px;outline:none;cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:13px;height:13px;border-radius:50%;
+  background:var(--amber);cursor:pointer;
+  border:2px solid var(--bg);
+}
+
+/* Scope */
+.scope-body{flex:1;display:flex;flex-direction:column;min-height:0}
+.scope-screen-wrap{flex:1;position:relative;min-height:0;background:#020904}
+canvas#oscillo{width:100%;height:100%;display:block}
+.scope-ch-labels{
+  position:absolute;top:4px;left:6px;
+  display:flex;flex-direction:column;gap:2px;
+  pointer-events:none;
+}
+.ch-tag{
+  font-size:8px;padding:2px 5px;border-radius:2px;
+  backdrop-filter:blur(2px);letter-spacing:0.5px;
+}
+.ch-tag.c1{background:rgba(255,255,0,.12);color:#ffff55}
+.ch-tag.c2{background:rgba(0,229,170,.08);color:#00e5aa}
+.scope-footer{
+  padding:4px 8px;
+  background:var(--panel2);
+  border-top:1px solid var(--border);
+  display:flex;gap:10px;flex-wrap:wrap;
+  font-size:8px;color:var(--dim2);
+  flex-shrink:0;
+}
+.sc-stat span{color:var(--white2);font-weight:500}
+
+/* ══════════ CENTER: BREADBOARD ══════════ */
+.center-panel{
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  background:var(--bg);
+}
+.bb-header{
+  padding:6px 12px;
+  background:var(--panel);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+  flex-shrink:0;
+}
+.bb-header-title{font-size:9px;color:var(--dim2);letter-spacing:2px}
+.probe-bar{
+  display:flex;gap:5px;align-items:center;flex-wrap:nowrap;overflow-x:auto;
+}
+.pr-btn{
+  padding:3px 9px;
+  font-size:8px;
+  font-family:var(--mono);
+  border-radius:12px;
+  border:1px solid var(--border2);
+  color:var(--dim2);cursor:pointer;
+  background:none;
+  transition:.15s;letter-spacing:0.5px;
+  white-space:nowrap;flex-shrink:0;
+}
+.pr-btn:hover{border-color:var(--dim2);color:var(--white2)}
+.pr-btn.active{font-weight:700;color:#000}
+.bb-wrap{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:10px;
+  overflow:auto;
+  cursor:zoom-in;
+}
+svg#bb{
+  display:block;
+  max-width:100%;
+  max-height:100%;
+  transition: all 0.3s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+svg#bb.zoomed{
+  cursor:zoom-out;
+}
+
+/* Indicadores de simulación */
+.sim-indicator{
+  position:absolute;
+  font-size:7px;
+  font-weight:bold;
+  pointer-events:none;
+  letter-spacing:0.5px;
+}
+.voltage-label{
+  background:rgba(0,100,200,0.8);
+  color:#33ddff;
+  padding:1px 3px;
+  border-radius:2px;
+}
+.current-label{
+  background:rgba(200,100,0,0.8);
+  color:#ffdd44;
+  padding:1px 3px;
+  border-radius:2px;
+}
+.signal-flow{
+  stroke-dasharray:4,4;
+  stroke-linecap:round;
+  animation: flowAnimation 1.5s linear infinite;
+}
+@keyframes flowAnimation{
+  0% { stroke-dashoffset:0; }
+  100% { stroke-dashoffset:8; }
+}
+
+/* ══════════ RIGHT: INFO PANEL ══════════ */
+.right-panel{
+  background:var(--panel);
+  border-left:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.info-tabs{
+  display:flex;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.info-tab{
+  flex:1;
+  padding:8px 4px;
+  font-size:8px;
+  letter-spacing:1px;
+  color:var(--dim2);
+  cursor:pointer;
+  text-align:center;
+  border-bottom:2px solid transparent;
+  transition:.15s;
+}
+.info-tab:hover{color:var(--white2)}
+.info-tab.active{color:var(--green);border-bottom-color:var(--green)}
+
+.info-body{flex:1;overflow-y:auto;padding:12px}
+
+/* Component info */
+.comp-card-big{
+  background:var(--panel2);
+  border:1px solid var(--border2);
+  border-radius:8px;
+  overflow:hidden;
+  margin-bottom:10px;
+}
+.ccb-head{
+  padding:10px 12px;
+  display:flex;align-items:center;gap:10px;
+}
+.ccb-icon{
+  width:36px;height:36px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:900;font-family:var(--display);
+  flex-shrink:0;
+}
+.ccb-title{font-size:13px;font-weight:700;color:var(--white);line-height:1.2}
+.ccb-val{font-size:9px;color:var(--amber);margin-top:2px;letter-spacing:0.5px}
+.ccb-body{padding:10px 12px;border-top:1px solid var(--border)}
+.ccb-section{margin-bottom:10px}
+.ccb-section-title{
+  font-size:8px;color:var(--green);
+  letter-spacing:2px;margin-bottom:5px;
+  text-transform:uppercase;
+}
+.ccb-text{font-size:10px;color:var(--white2);line-height:1.7}
+.ccb-formula{
+  background:var(--panel3);
+  border:1px solid var(--border2);
+  border-radius:4px;
+  padding:6px 10px;
+  font-size:10px;
+  color:var(--amber);
+  margin:5px 0;
+  letter-spacing:0.5px;
+}
+.ccb-badge-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.ccb-badge{
+  padding:2px 7px;
+  border-radius:10px;
+  font-size:8px;
+  letter-spacing:0.5px;
+}
+
+/* Stage flow */
+.flow-item{
+  display:flex;align-items:flex-start;gap:8px;
+  padding:8px 0;
+  border-bottom:1px solid var(--border);
+  cursor:pointer;
+  transition:.15s;
+}
+.flow-item:last-child{border-bottom:none}
+.flow-item:hover{background:var(--panel2);margin:0 -12px;padding:8px 12px}
+.flow-item.active{background:var(--panel3);margin:0 -12px;padding:8px 12px;border-left:2px solid var(--green)}
+.fi-num{
+  width:20px;height:20px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:700;
+  flex-shrink:0;margin-top:1px;
+}
+.fi-name{font-size:11px;font-weight:700;line-height:1.3}
+.fi-desc{font-size:9px;color:var(--dim2);margin-top:2px;line-height:1.5}
+
+/* Guide tab */
+.guide-section{margin-bottom:14px}
+.guide-section h3{
+  font-size:10px;color:var(--green);
+  letter-spacing:2px;margin-bottom:8px;
+  display:flex;align-items:center;gap:6px;
+}
+.guide-item{
+  display:flex;gap:8px;margin-bottom:7px;
+  align-items:flex-start;
+}
+.gi-icon{
+  width:22px;height:22px;border-radius:4px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;flex-shrink:0;margin-top:1px;
+}
+.gi-title{font-size:10px;font-weight:700;color:var(--white);line-height:1.3}
+.gi-body{font-size:9px;color:var(--dim2);margin-top:2px;line-height:1.5}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* Button help tooltip overlay */
+.help-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);
+  z-index:100;display:none;align-items:center;justify-content:center;
+}
+.help-overlay.show{display:flex}
+.help-modal{
+  background:var(--panel2);
+  border:1px solid var(--border2);
+  border-radius:12px;
+  width:500px;max-width:95vw;
+  max-height:80vh;
+  overflow-y:auto;
+  padding:20px;
+}
+.hm-title{font-family:var(--display);font-size:14px;color:var(--green);margin-bottom:14px;letter-spacing:2px}
+.hm-section{margin-bottom:14px}
+.hm-section h3{font-size:9px;color:var(--amber);letter-spacing:2px;margin-bottom:6px}
+.hm-row{display:flex;gap:10px;margin-bottom:6px;align-items:flex-start}
+.hm-key{
+  background:var(--panel3);border:1px solid var(--border2);
+  border-radius:4px;padding:3px 8px;
+  font-size:9px;font-weight:700;
+  color:var(--white);white-space:nowrap;flex-shrink:0;min-width:80px;text-align:center;
+}
+.hm-exp{font-size:9px;color:var(--dim2);line-height:1.5}
+.hm-close{
+  background:none;border:1px solid var(--border2);
+  color:var(--dim2);font-family:var(--mono);
+  font-size:9px;padding:6px 14px;border-radius:4px;
+  cursor:pointer;letter-spacing:1px;margin-top:8px;
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ TOP BAR ══════════ -->
+<div class="topbar">
+  <div class="tb-logo">📻 RADIO AM</div>
+  <div class="tb-sep"></div>
+  <div class="tb-meta">
+    SUPERHETERODINA · FI <span>455 kHz</span><br>
+    SIMULACIÓN TIPO TINKERCAD
+  </div>
+  <div class="tb-sep"></div>
+
+  <div class="tb-center" id="stagePills"></div>
+
+  <div class="tb-right">
+    <div class="tb-indicator">
+      <div class="led" id="led"></div>
+      <span id="ledTxt" style="font-size:9px">ENCENDIDO</span>
+    </div>
+    <button class="pwr-btn" id="pwrBtn" onclick="togglePower()">⏻ ON</button>
+    <button class="pwr-btn" style="border-color:var(--blue);color:var(--blue)"
+      onclick="showHelp()">? AYUDA</button>
+  </div>
+</div>
+
+<!-- ══════════ MAIN ══════════ -->
+<div class="main">
+
+  <!-- ── LEFT: GENERATOR + SCOPE ── -->
+  <div class="left-panel">
+
+    <!-- Generator -->
+    <div class="panel-hdr">
+      <div class="panel-hdr-dot" style="background:#ff8888"></div>
+      GENERADOR DE SEÑAL AC
+    </div>
+    <div class="gen-body">
+      <div class="gen-screen">
+        <div class="gen-screen-row">
+          <div>
+            <div class="gs-lbl">FORMA DE ONDA</div>
+            <div class="gen-wave">∿</div>
+          </div>
+          <div style="text-align:right">
+            <div class="gs-lbl">FRECUENCIA</div>
+            <div><span class="gs-val" id="gFreq">1.0</span><span class="gs-unit">kHz</span></div>
+          </div>
+        </div>
+        <div class="gen-screen-row">
+          <div>
+            <div class="gs-lbl">AMPLITUD</div>
+            <div><span class="gs-val" id="gAmp">5.0</span><span class="gs-unit">V p-p</span></div>
+          </div>
+          <div style="text-align:right">
+            <div class="gs-lbl">MOD. AM</div>
+            <div><span class="gs-val" id="gMod">70</span><span class="gs-unit">%</span></div>
+          </div>
+        </div>
+        <div style="margin-top:4px">
+          <div class="gen-badge" id="stationTag">◈ EMISORA: 1000 kHz</div>
+        </div>
+      </div>
+
+      <div class="ctrl-row">
+        <span class="ctrl-lbl">AUDIO FREQ</span>
+        <input type="range" min="200" max="4000" value="1000" id="rFreq" oninput="setFreq(+this.value)">
+        <span class="ctrl-val" style="color:var(--amber)" id="vFreq">1.0k</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-lbl">AMPLITUD</span>
+        <input type="range" min="5" max="100" value="50" id="rAmp" oninput="setAmp(+this.value)">
+        <span class="ctrl-val" style="color:var(--green)" id="vAmp">5.0V</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-lbl">MODULACIÓN</span>
+        <input type="range" min="5" max="100" value="70" id="rMod" oninput="setMod(+this.value)">
+        <span class="ctrl-val" style="color:var(--blue)" id="vMod">70%</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-lbl">ESTACIÓN AM</span>
+        <input type="range" min="535" max="1605" value="1000" id="rStation" oninput="setStation(+this.value)">
+        <span class="ctrl-val" style="color:var(--purple)" id="vStation">1000</span>
+      </div>
+
+      <!-- Terminals visual -->
+      <div style="display:flex;gap:10px;margin-top:8px;font-size:8px;color:var(--dim2)">
+        <div style="display:flex;align-items:center;gap:4px">
+          <div style="width:14px;height:14px;border-radius:50%;background:#ff4444;border:2px solid #ff8888;flex-shrink:0"></div>
+          SEÑAL +
+        </div>
+        <div style="display:flex;align-items:center;gap:4px">
+          <div style="width:14px;height:14px;border-radius:50%;background:#111;border:2px solid #444;flex-shrink:0"></div>
+          GND
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;margin-left:auto;color:var(--green);font-size:8px">
+          🔌 Conectado a P1
+        </div>
+      </div>
+    </div>
+
+    <!-- Oscilloscope -->
+    <div class="panel-hdr">
+      <div class="panel-hdr-dot" style="background:#4fc3f7"></div>
+      OSCILOSCOPIO DIGITAL  2 CANALES
+    </div>
+    <div class="scope-body">
+      <div class="scope-screen-wrap">
+        <canvas id="oscillo"></canvas>
+        <div class="scope-ch-labels">
+          <div class="ch-tag c1">CH1 — Entrada AM</div>
+          <div class="ch-tag c2" id="ch2tag">CH2 — Detector</div>
+        </div>
+      </div>
+      <div class="scope-footer">
+        <div class="sc-stat">T/DIV <span id="sTdiv">500µs</span></div>
+        <div class="sc-stat">CH1 <span style="color:#ffff44">1V/div</span></div>
+        <div class="sc-stat">CH2 <span style="color:#00e5aa">0.5V/div</span></div>
+        <div class="sc-stat">FREQ <span id="sFreqMeas">1.000kHz</span></div>
+        <div class="sc-stat">SNR <span id="sSNR">28dB</span></div>
+        <div class="sc-stat">OSC <span id="sOsc">1455kHz</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CENTER: BREADBOARD ── -->
+  <div class="center-panel">
+    <div class="bb-header">
+      <div class="bb-header-title">PROTOBOARD — SELECCIONA PUNTO DE MEDIDA:</div>
+      <div class="probe-bar" id="probeBar"></div>
+    </div>
+    <div class="bb-wrap">
+      <svg id="bb" viewBox="0 0 980 340" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+  </div>
+
+  <!-- ── RIGHT: INFO PANEL ── -->
+  <div class="right-panel">
+    <div class="info-tabs">
+      <div class="info-tab active" id="tab-comp" onclick="switchTab('comp')">COMPONENTE</div>
+      <div class="info-tab" id="tab-flow" onclick="switchTab('flow')">ETAPAS</div>
+      <div class="info-tab" id="tab-guide" onclick="switchTab('guide')">GUÍA</div>
+    </div>
+    <div class="info-body" id="infoBody"></div>
+  </div>
+
+</div>
+
+<!-- HELP OVERLAY -->
+<div class="help-overlay" id="helpOverlay" onclick="this.classList.remove('show')">
+  <div class="help-modal" onclick="event.stopPropagation()">
+    <div class="hm-title">📖 GUÍA DE BOTONES Y CONTROLES</div>
+
+    <div class="hm-section">
+      <h3>⏻ CONTROLES PRINCIPALES</h3>
+      <div class="hm-row">
+        <div class="hm-key">⏻ ON/OFF</div>
+        <div class="hm-exp">Enciende o apaga toda la simulación. Con el circuito apagado el osciloscopio muestra línea plana (sin señal). Úsalo para ver la diferencia entre circuito activo e inactivo.</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-key">? AYUDA</div>
+        <div class="hm-exp">Muestra esta ventana con la explicación de todos los controles y botones del simulador.</div>
+      </div>
+    </div>
+
+    <div class="hm-section">
+      <h3>📻 PASTILLAS DE ETAPA (barra superior)</h3>
+      <div class="hm-row">
+        <div class="hm-key">ANTENA</div>
+        <div class="hm-exp">Salta al punto de medida P1 y muestra el componente L1 (bobina ferrita). Verás la señal RF original muy pequeña con mucho ruido.</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-key">SINTONÍA</div>
+        <div class="hm-exp">Salta a P2 (circuito LC). La señal se ve más limpia porque el filtro LC elimina frecuencias que no son la estación seleccionada.</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-key">AMP RF · MIX · FI · DETECT · AUDIO</div>
+        <div class="hm-exp">Cada pastilla salta al punto de medida de esa etapa del circuito superheterodino. La señal cambia de forma en cada punto.</div>
+      </div>
+    </div>
+
+    <div class="hm-section">
+      <h3>🔴 PUNTOS DE MEDIDA P1–P7 (barra del protoboard)</h3>
+      <div class="hm-row">
+        <div class="hm-key">P1 Antena</div>
+        <div class="hm-exp">Señal RF cruda de la antena de ferrita. Muy débil (~µV), mucho ruido. Sin filtrar.</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-key">P2 LC</div>
+        <div class="hm-exp">Después del circuito tanque LC. Señal AM con portadora visible, más limpia que P1.</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-key">P3 Amp RF</div>
+        <div class="hm-exp">Salida del transistor Q1. Señal RF amplificada ~30 veces. La modulación AM es claramente visible.</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-key">P4 Oscilador</div>
+        <div class="hm-exp">Señal del oscilador local Colpitts. Onda sinusoidal pura a fRF + 455 kHz. Amplitud constante.</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-key">P5 FI 455kHz</div>
+        <div class="hm-exp">Salida del mezclador y filtro FI. Señal AM a frecuencia intermedia fija de 455 kHz.</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-key">P6 Detector ★</div>
+        <div class="hm-exp">¡El más importante! Aquí se ve la DEMODULACIÓN: la señal deja de ser RF y aparece la onda de audio original (envolvente).</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-key">P7 Audio</div>
+        <div class="hm-exp">Salida del LM386 lista para el altavoz. Onda de audio amplificada, sin portadora RF.</div>
+      </div>
+    </div>
+
+    <div class="hm-section">
+      <h3>🎛️ SLIDERS DEL GENERADOR</h3>
+      <div class="hm-row">
+        <div class="hm-key">AUDIO FREQ</div>
+        <div class="hm-exp">Cambia la frecuencia del tono de audio que modula la portadora AM (200Hz–4kHz). Afecta la velocidad de la envolvente en los canales del osciloscopio.</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-key">AMPLITUD</div>
+        <div class="hm-exp">Potencia de la señal inyectada. A mayor amplitud, señal más grande en el osciloscopio. Afecta el SNR calculado.</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-key">MODULACIÓN</div>
+        <div class="hm-exp">Índice de modulación AM (0–100%). Al 100% la envolvente llega a cero. Por debajo del 50% la modulación es suave. Por encima del 100% habría sobremodulación (distorsión).</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-key">ESTACIÓN AM</div>
+        <div class="hm-exp">Sintoniza la frecuencia de la emisora (535–1605 kHz). El oscilador local se ajusta automáticamente a fRF + 455 kHz para mantener la FI fija.</div>
+      </div>
+    </div>
+
+    <div class="hm-section">
+      <h3>📋 PESTAÑAS DEL PANEL DERECHO</h3>
+      <div class="hm-row">
+        <div class="hm-key">COMPONENTE</div>
+        <div class="hm-exp">Muestra información detallada del componente asociado al punto de medida activo: valores, función, fórmulas y características técnicas.</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-key">ETAPAS</div>
+        <div class="hm-exp">Vista general del flujo de señal por todas las etapas del receptor superheterodino. Haz clic en cualquier etapa para saltar a ese punto de medida.</div>
+      </div>
+      <div class="hm-row">
+        <div class="hm-key">GUÍA</div>
+        <div class="hm-exp">Explicación del principio superheterodino, los fundamentos físicos y cómo interpretar las señales en el osciloscopio.</div>
+      </div>
+    </div>
+
+    <button class="hm-close" onclick="hideHelp()">✕ CERRAR AYUDA</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  CONSTANTS & DATA
+// ══════════════════════════════════════════════
+const STAGE_COLORS = ['#4db6ac','#4fc3f7','#aed581','#ffb300','#ce93d8','#ff8a65','#f06292'];
+
+const PROBES = [
+  { id:0, lbl:'P1 Antena',     stageIdx:0, short:'Antena/L1',    ch2:'CH2 — RF crudo antena',          type:'ant',   col:7  },
+  { id:1, lbl:'P2 LC',         stageIdx:1, short:'Circ. LC',     ch2:'CH2 — RF sintonizado',            type:'lc',    col:15 },
+  { id:2, lbl:'P3 Amp RF',     stageIdx:2, short:'Amp RF Q1',    ch2:'CH2 — RF amplificado ×30',        type:'rf',    col:24 },
+  { id:3, lbl:'P4 Oscilador',  stageIdx:3, short:'Oscilador',    ch2:'CH2 — Oscilador local (puro)',    type:'osc',   col:33 },
+  { id:4, lbl:'P5 FI 455kHz',  stageIdx:4, short:'FI 455kHz',   ch2:'CH2 — Frec. Intermedia 455kHz',  type:'fi',    col:42 },
+  { id:5, lbl:'P6 Detector ★', stageIdx:5, short:'Detector',    ch2:'CH2 — Audio demodulado ★',       type:'det',   col:51 },
+  { id:6, lbl:'P7 Audio',      stageIdx:6, short:'Audio LM386',  ch2:'CH2 — Audio amplificado',        type:'aud',   col:58 },
+];
+
+const STAGES = [
+  { name:'Antena / L1', color:'#4db6ac' },
+  { name:'Circuito LC', color:'#4fc3f7' },
+  { name:'Amp RF',      color:'#aed581' },
+  { name:'Oscilador',   color:'#ffb300' },
+  { name:'FI 455kHz',   color:'#ce93d8' },
+  { name:'Detector',    color:'#ff8a65' },
+  { name:'Amp Audio',   color:'#f06292' },
+];
+
+const COMP_INFO = [
+  {
+    id:'L1', icon:'⌇', name:'Bobina de Ferrita', val:'470 µH · Ø 10cm',
+    color:'#4db6ac',
+    funcion:'Actúa simultáneamente como antena y primer filtro. La barra de ferrita concentra las líneas del campo magnético de las ondas de radio, induciendo una pequeña tensión alterna proporcional a la señal de la emisora.',
+    formula:'V_ind = N · dΦ/dt',
+    como:'La bobina captura señales de todo el espectro AM (535–1605 kHz). Junto con el condensador variable C1 forma el circuito resonante que selecciona la estación. Sin ferrita, la sensibilidad caería más de 20 dB.',
+    params:['Inductancia: 470 µH','Núcleo: ferrita Mn-Zn','Banda: 535–1605 kHz','Factor Q: ~80','Resistencia DC: <1 Ω'],
+    badges:[{txt:'ANTENA',c:'#4db6ac'},{txt:'PASIVO',c:'#666'}]
+  },
+  {
+    id:'C1', icon:'⊣⊢', name:'Condensador Variable', val:'10–400 pF',
+    color:'#4fc3f7',
+    funcion:'Es el elemento de sintonía. Al girar el dial físico del receptor se cambia la distancia entre sus placas, variando la capacitancia y con ello la frecuencia de resonancia del circuito tanque LC.',
+    formula:'f_res = 1 / (2π √LC)',
+    como:'Para sintonizar 1000 kHz con L=470µH se necesita C=54 pF. Para 540 kHz se necesita C=185 pF. El condensador variable permite ajustar C en todo ese rango.',
+    params:['Capacidad: 10–400 pF','Secciones: 2 (RF + OSC)','Dieléctrico: aire','Temperatura coef: NP0'],
+    badges:[{txt:'SINTONÍA',c:'#4fc3f7'},{txt:'PASIVO',c:'#666'}]
+  },
+  {
+    id:'Q1', icon:'⊿', name:'Amplificador RF', val:'BC547 NPN · hFE≈200',
+    color:'#aed581',
+    funcion:'Primer transistor activo del receptor. Amplifica la débil señal de la antena (típicamente 10–100 µV) hasta un nivel de mV suficiente para alimentar el mezclador. Opera en clase A para mínima distorsión.',
+    formula:'A_v = -hFE · R_c / r_e ≈ ×30',
+    como:'La base recibe la señal RF del circuito LC. El colector entrega la señal amplificada. El emisor va a masa a través de R2=1kΩ que estabiliza el punto de operación. R1=100kΩ fija la polarización.',
+    params:['Transistor: BC547 NPN','Ganancia hFE: 200–450','V_CEO max: 45V','I_C max: 100 mA','R1 bias: 100 kΩ','R2 emisor: 1 kΩ','Ganancia etapa: ×25–35'],
+    badges:[{txt:'ACTIVO',c:'#aed581'},{txt:'CLASE A',c:'#555'},{txt:'NPN',c:'#444'}]
+  },
+  {
+    id:'OSC', icon:'〜', name:'Oscilador Colpitts', val:'LC + BC547',
+    color:'#ffb300',
+    funcion:'Genera una señal sinusoidal estable cuya frecuencia es siempre 455 kHz mayor que la estación sintonizada. Este es el principio fundamental del receptor superheterodino: al sintonizar cambia el oscilador, no los filtros.',
+    formula:'f_osc = f_RF + 455 kHz',
+    como:'El circuito Colpitts usa dos condensadores (C2a y C2b) como divisor de tensión y una bobina L2. La realimentación positiva mantiene la oscilación. El transistor Q3 compensa las pérdidas del resonador LC.',
+    params:['Topología: Colpitts','Q3: BC547 NPN','L2: 47 µH','C2a: 220 pF','C2b: 100 pF','Rango: 990–2060 kHz','Estabilidad: ±0.1%'],
+    badges:[{txt:'ACTIVO',c:'#ffb300'},{txt:'COLPITTS',c:'#555'},{txt:'OSCILADOR',c:'#444'}]
+  },
+  {
+    id:'Q2+FI', icon:'×', name:'Mezclador + Filtro FI', val:'BC547 · 455 kHz',
+    color:'#ce93d8',
+    funcion:'El mezclador combina la señal RF amplificada con el oscilador local. Al multiplicarlas no linealmente aparecen nuevas frecuencias: la suma (fRF+fOSC) y la diferencia (fOSC−fRF = 455 kHz siempre). El filtro FI cerámico deja pasar SOLO 455 kHz.',
+    formula:'f_IF = f_OSC − f_RF = 455 kHz',
+    como:'Esta es la clave de la superheterodina: aunque sintonices diferentes emisoras, la FI siempre es 455 kHz. Esto permite diseñar un filtro muy estrecho y selectivo de una sola vez, sin re-sintonizarlo.',
+    params:['Q2: BC547 mezclador','Filtro: cerámico piezo','f_FI: 455 kHz','BW: ±4.5 kHz','Rechazo imágenes: 40 dB','Q del filtro: ~101'],
+    badges:[{txt:'ACTIVO',c:'#ce93d8'},{txt:'NO LINEAL',c:'#555'},{txt:'MEZCLA',c:'#444'}]
+  },
+  {
+    id:'D1+RC', icon:'▷|', name:'Detector de Envolvente', val:'1N4148 · RC=100µs',
+    color:'#ff8a65',
+    funcion:'Es el demodulador AM. El diodo 1N4148 rectifica la señal FI de 455 kHz, dejando pasar solo los semiciclos positivos. El filtro RC extrae la envolvente de esta señal rectificada, que es exactamente la señal de audio original que moduló la portadora.',
+    formula:'τ = R5 × C3 = 10kΩ × 10nF = 100 µs',
+    como:'La constante τ=100µs es clave: debe ser mucho mayor que el período de la FI (T_FI=2.2µs) para filtrarla, pero menor que el período del audio más agudo (T_4kHz=250µs) para seguir la envolvente sin distorsión.',
+    params:['Diodo: 1N4148 Si','V_F diodo: 0.7V','R5: 10 kΩ','C3: 10 nF','τ = 100 µs','f_corte: ~1.6 kHz','Recupera: señal audio'],
+    badges:[{txt:'DETECTOR',c:'#ff8a65'},{txt:'DEMODULA AM',c:'#555'},{txt:'PASIVO',c:'#444'}]
+  },
+  {
+    id:'LM386', icon:'▷▷', name:'Amplificador de Audio', val:'CI LM386 · 1W',
+    color:'#f06292',
+    funcion:'Circuito integrado especializado en amplificación de audio de baja potencia. Toma la débil señal de audio del detector (10–50 mV) y la amplifica hasta 0.5–1 W suficiente para un altavoz de 8Ω. Alimentación directa de la batería de 9V.',
+    formula:'A_v = 20 a 200 (configurable)',
+    como:'Con las patillas 1 y 8 sin conectar, la ganancia es 20x (26 dB). Añadiendo un condensador entre pines 1-8 se sube a 200x (46 dB). El condensador C4 de 10µF bloquea la componente DC que dañaría el altavoz.',
+    params:['CI: LM386 DIP-8','Ganancia: 20–200×','V_CC: 4–12 V','I_q: 4 mA','P_out: hasta 1 W','Carga: 8 Ω','THD: 0.2% @ 125mW','BW audio: 300Hz–3kHz'],
+    badges:[{txt:'ACTIVO',c:'#f06292'},{txt:'CI DIP-8',c:'#555'},{txt:'CLASE AB',c:'#444'}]
+  },
+];
+
+const FLOW_INFO = [
+  { stage:0, color:'#4db6ac', name:'① Antena y Circuito L1+C1', desc:'La bobina de ferrita capta ondas electromagnéticas. El circuito tanque LC sintoniza la frecuencia deseada (535–1605 kHz). Solo pasa la emisora seleccionada.' },
+  { stage:1, color:'#4fc3f7', name:'② Amplificador RF (Q1)', desc:'El transistor BC547 amplifica la señal seleccionada de µV a mV. Ganancia ≈ ×30. Sin esta etapa la señal es demasiado débil para el mezclador.' },
+  { stage:2, color:'#ffb300', name:'③ Oscilador Local Colpitts', desc:'Genera siempre fRF + 455 kHz. Si sintonizas 1000 kHz → el oscilador va a 1455 kHz. La FI resultante es SIEMPRE 455 kHz fija.' },
+  { stage:3, color:'#ce93d8', name:'④ Mezclador + Filtro FI', desc:'Combina RF y oscilador. La diferencia = 455 kHz (FI). El filtro cerámico elimina todo lo demás. Aquí se obtiene la mayor ganancia del receptor.' },
+  { stage:4, color:'#ff8a65', name:'⑤ Detector de Envolvente', desc:'Diodo 1N4148 + filtro RC recupera la señal de audio original. Transforma la AM (455kHz) en audio (20Hz–15kHz). Este es el proceso de DEMODULACIÓN.' },
+  { stage:5, color:'#f06292', name:'⑥ Amplificador Audio LM386', desc:'Amplifica el audio débil del detector hasta potencia útil para el altavoz. El condensador C4 bloquea DC. Ganancia configurable 20–200×.' },
+  { stage:6, color:'#aaa', name:'⑦ Altavoz 8Ω', desc:'Convierte la señal eléctrica de audio en ondas sonoras. La bobina del altavoz mueve la membrana a frecuencias 20Hz–20kHz que el oído humano puede escuchar.' },
+];
+
+const GUIDE_CONTENT = `
+<div class="guide-section">
+  <h3><span>📡</span>EL PRINCIPIO SUPERHETERODINO</h3>
+  <div style="font-size:10px;color:var(--white2);line-height:1.8;margin-bottom:8px">
+    En lugar de amplificar directamente la frecuencia de la emisora (que varía entre 535 y 1605 kHz), la radio <b style="color:var(--green)">convierte todas las estaciones a una frecuencia intermedia fija de 455 kHz</b>. Esto permite usar un único filtro muy selectivo y amplificadores de alta ganancia sin necesidad de resintonizarlos.
+  </div>
+  <div style="background:var(--panel3);border:1px solid var(--border2);border-radius:6px;padding:10px;font-size:9px;color:var(--amber);line-height:2">
+    fRF (emisora) + fOSC → MEZCLADOR → fIF = 455 kHz siempre<br>
+    Ejemplo: 1000 kHz + 1455 kHz → |1455 − 1000| = 455 kHz ✓<br>
+    Ejemplo: 800 kHz + 1255 kHz → |1255 − 800| = 455 kHz ✓
+  </div>
+</div>
+
+<div class="guide-section">
+  <h3><span>📊</span>CÓMO LEER EL OSCILOSCOPIO</h3>
+  <div class="guide-item">
+    <div class="gi-icon" style="background:#1a1a00;color:#ffff44">CH1</div>
+    <div class="gi-text">
+      <div class="gi-title">Canal Amarillo — Entrada AM</div>
+      <div class="gi-body">Siempre muestra la señal del generador: portadora RF con la envolvente de audio visible. La amplitud varía según el índice de modulación.</div>
+    </div>
+  </div>
+  <div class="guide-item">
+    <div class="gi-icon" style="background:#001a0d;color:#00e5aa">CH2</div>
+    <div class="gi-text">
+      <div class="gi-title">Canal Verde — Punto de medida</div>
+      <div class="gi-body">Cambia según el botón P1–P7 activo. Muestra la señal real en ese nodo del circuito. Observa cómo la señal se transforma en cada etapa.</div>
+    </div>
+  </div>
+</div>
+
+<div class="guide-section">
+  <h3><span>🔬</span>QUÉ VER EN CADA PUNTO</h3>
+  <div class="guide-item">
+    <div class="gi-icon" style="background:#0a1f1a;color:#4db6ac;font-size:9px;font-weight:700">P1</div>
+    <div class="gi-text"><div class="gi-title">Antena</div><div class="gi-body">Señal RF muy pequeña y ruidosa. La portadora AM es visible pero la amplitud es de solo µV.</div></div>
+  </div>
+  <div class="guide-item">
+    <div class="gi-icon" style="background:#0a1f2a;color:#4fc3f7;font-size:9px;font-weight:700">P3</div>
+    <div class="gi-text"><div class="gi-title">Amp RF</div><div class="gi-body">Misma forma que P1 pero más grande. La modulación AM (forma de la envolvente) es ahora claramente visible.</div></div>
+  </div>
+  <div class="guide-item">
+    <div class="gi-icon" style="background:#1a1400;color:#ffb300;font-size:9px;font-weight:700">P4</div>
+    <div class="gi-text"><div class="gi-title">Oscilador</div><div class="gi-body">Onda sinusoidal perfecta, amplitud constante. No tiene modulación de audio, es solo la referencia local.</div></div>
+  </div>
+  <div class="guide-item">
+    <div class="gi-icon" style="background:#1a0a1a;color:#ff8a65;font-size:9px;font-weight:700">P6</div>
+    <div class="gi-text"><div class="gi-title">Detector ★</div><div class="gi-body">¡El más espectacular! La portadora RF desaparece y queda solo la onda de audio. Esto es la demodulación.</div></div>
+  </div>
+</div>
+
+<div class="guide-section">
+  <h3><span>💡</span>EXPERIMENTOS SUGERIDOS</h3>
+  <div style="font-size:9px;color:var(--white2);line-height:1.9">
+    <b style="color:var(--green)">1.</b> Sube la MODULACIÓN al 100% y ve a P6 → la envolvente llega exactamente a cero.<br>
+    <b style="color:var(--green)">2.</b> Baja la AMPLITUD al mínimo → el SNR cae y la señal se vuelve ruidosa.<br>
+    <b style="color:var(--green)">3.</b> Cambia la ESTACIÓN AM y observa el cambio en el display del oscilador.<br>
+    <b style="color:var(--green)">4.</b> Apaga el circuito (⏻) y observa la línea plana en ambos canales.<br>
+    <b style="color:var(--green)">5.</b> Compara P3 (RF con envolvente) vs P6 (solo audio) para entender la demodulación.
+  </div>
+</div>`;
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+const S = {
+  freq: 1000,   // audio freq Hz
+  amp:  5,      // amplitude V
+  mod:  70,     // modulation %
+  station: 1000, // RF station kHz
+  power: true,
+  probe: 5,     // active probe index
+  t: 0,
+  tab: 'comp'
+};
+
+// ══════════════════════════════════════════════
+//  BREADBOARD SVG
+// ══════════════════════════════════════════════
+function buildBB() {
+  const svg = document.getElementById('bb');
+  const NS = 'http://www.w3.org/2000/svg';
+  // Wider viewBox to fit all corrected components with proper spacing
+  svg.setAttribute('viewBox','0 0 980 340');
+
+  const W = 980, H = 340;
+  const COLS = 63, CW = 14, startX = 44;
+  const cx = c => startX + (c - 1) * CW;
+
+  const RY = {
+    vccT: 8, gndT: 22,
+    a:40, b:54, c:68, d:82, e:96,
+    mid: 108,
+    f:122, g:136, h:150, i:164, j:178,
+    gndB: 192, vccB: 206
+  };
+  const topRows = [RY.a,RY.b,RY.c,RY.d,RY.e];
+  const botRows = [RY.f,RY.g,RY.h,RY.i,RY.j];
+
+  // ── HELPERS ──
+  const mk = (tag, attrs) => {
+    const el = document.createElementNS(NS, tag);
+    Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k, v));
+    return el;
+  };
+  const app = el => svg.appendChild(el);
+  const txt = (x,y,s,fill,size,anchor='middle',weight='normal') => {
+    const t = mk('text', {x,y,fill,'font-size':size,'font-weight':weight,
+      'font-family':'JetBrains Mono,monospace','text-anchor':anchor,'dominant-baseline':'middle'});
+    t.textContent = s; app(t); return t;
+  };
+  const ln = (x1,y1,x2,y2,stroke,sw=1.5,dash='') => {
+    const l = mk('line',{x1,y1,x2,y2,stroke,'stroke-width':sw,'stroke-linecap':'round'});
+    if(dash) l.setAttribute('stroke-dasharray',dash);
+    app(l); return l;
+  };
+  const poly = (pts,stroke,sw=1.5,dash='') => {
+    const p = mk('polyline',{points:pts.map(([x,y])=>`${x},${y}`).join(' '),
+      stroke,'stroke-width':sw,fill:'none','stroke-linecap':'round','stroke-linejoin':'round'});
+    if(dash) p.setAttribute('stroke-dasharray',dash);
+    app(p); return p;
+  };
+  const rect = (x,y,w,h,fill,stroke='none',sw=1,rx=2) => {
+    const r = mk('rect',{x,y,width:w,height:h,fill,stroke,'stroke-width':sw,rx});
+    app(r); return r;
+  };
+  // Horizontal resistor with color bands
+  const resH = (x1,x2,y,bands) => {
+    const mx=(x1+x2)/2, rw=(x2-x1)*0.7;
+    ln(x1,y,mx-rw/2,y,'#888',1.5);
+    ln(x2,y,mx+rw/2,y,'#888',1.5);
+    rect(mx-rw/2,y-5,rw,10,'#c8844a',0,0,3);
+    const bC={bk:'#111',bn:'#6b3b0a',rd:'#cc0000',or:'#ff8800',ye:'#eedd00',
+               gn:'#007700',bl:'#0000cc',vi:'#8800aa',gy:'#888',gd:'#ffd700',sv:'#bbb'};
+    const bs=mx-rw/2+5, bst=(rw-12)/(bands.length-1);
+    bands.forEach((b,i)=>ln(bs+i*bst,y-5,bs+i*bst,y+5,bC[b]||'#888',2));
+  };
+  // Vertical resistor (for collector/emitter loads)
+  const resV = (x,y1,y2,bands) => {
+    const my=(y1+y2)/2, rh=(y2-y1)*0.6;
+    ln(x,y1,x,my-rh/2,'#888',1.5);
+    ln(x,my+rh/2,x,y2,'#888',1.5);
+    rect(x-5,my-rh/2,10,rh,'#c8844a',0,0,3);
+    const bC={bk:'#111',bn:'#6b3b0a',rd:'#cc0000',or:'#ff8800',ye:'#eedd00',
+               gn:'#007700',bl:'#0000cc',vi:'#8800aa',gy:'#888',gd:'#ffd700',sv:'#bbb'};
+    const bs=my-rh/2+5, bst=(rh-12)/(bands.length-1);
+    bands.forEach((b,i)=>ln(x-5,bs+i*bst,x+5,bs+i*bst,bC[b]||'#888',2));
+  };
+  // Horizontal capacitor (ceramic / small film)
+  const capH = (x1,x2,y,clr,variable=false) => {
+    const mx=(x1+x2)/2;
+    ln(x1,y,mx-3,y,clr,1.5);
+    ln(x2,y,mx+3,y,clr,1.5);
+    ln(mx-3,y-6,mx-3,y+6,clr,3.5);
+    ln(mx+3,y-6,mx+3,y+6,clr,3.5);
+    if(variable){ ln(mx-9,y+9,mx+9,y-9,'#555',1.2); }
+  };
+  // Vertical capacitor (can be electrolytic)
+  const capV = (x,y1,y2,clr,elec=false) => {
+    const my=(y1+y2)/2;
+    ln(x,y1,x,my-4,clr,1.5);
+    ln(x,my+4,x,y2,clr,1.5);
+    ln(x-7,my-4,x+7,my-4,clr,3.5);
+    ln(x-7,my+4,x+7,my+4,clr,3.5);
+    if(elec){ rect(x-4,my-12,8,22,clr,0,0,2); txt(x,my-2,'+','#fff',8); }
+  };
+  // Coil (inductance)
+  const coil = (x1,x2,y,clr) => {
+    const loops=5, lw=(x2-x1)/loops;
+    let d=`M${x1},${y}`;
+    for(let i=0;i<loops;i++){
+      const lx=x1+i*lw;
+      d+=` C${lx+lw*.3},${y-10},${lx+lw*.7},${y-10},${lx+lw},${y}`;
+    }
+    app(mk('path',{d,fill:'none',stroke:clr,'stroke-width':2.5,'stroke-linecap':'round'}));
+    ln(x1,y,x1,y+8,clr,1.5);
+    ln(x2,y,x2,y+8,clr,1.5);
+  };
+  // Transistor TO-92 (body at x,y; 3 legs: C=left, B=mid, E=right going DOWN)
+  const tran = (x,y,clr,lbl) => {
+    app(mk('path',{d:`M${x-11},${y} L${x+11},${y} L${x+11},${y-14} L${x},${y-21} L${x-11},${y-14} Z`,
+      fill:clr,stroke:'#555','stroke-width':0.5}));
+    // Legs: left=C, mid=B, right=E
+    ln(x-6,y+1,x-6,y+10,'#888',1.5);
+    ln(x,  y+1,x,  y+10,'#888',1.5);
+    ln(x+6,y+1,x+6,y+10,'#888',1.5);
+    // Pin labels inside body
+    txt(x-6,y-7,'C','rgba(255,255,255,.6)',5);
+    txt(x,  y-7,'B','rgba(255,255,255,.6)',5);
+    txt(x+6,y-7,'E','rgba(255,255,255,.6)',5);
+    if(lbl) txt(x,y-27,lbl,'#fff',8,'middle','bold');
+  };
+  // Diode (horizontal)
+  const diode = (x1,x2,y,clr) => {
+    const mx=(x1+x2)/2;
+    ln(x1,y,mx-8,y,'#888',1.5);
+    ln(x2,y,mx+8,y,'#888',1.5);
+    app(mk('ellipse',{cx:mx,cy:y,rx:9,ry:5,fill:'#f0b8b8',stroke:clr,'stroke-width':1.3}));
+    ln(mx+6,y-5,mx+6,y+5,'#333',2.8);
+    app(mk('polygon',{points:`${mx-7},${y-4} ${mx+5},${y} ${mx-7},${y+4}`,fill:'#cc3333'}));
+    // Cathode mark
+    txt(mx+8,y-10,'K','#cc4444',6,'start');
+    txt(mx-8,y-10,'A','#778',6,'end');
+  };
+  // FI ceramic filter block (4 pins)
+  const fiFilter = (x,y,clr) => {
+    rect(x-12,y-15,40,28,clr,'#9aa',0.8,4);
+    // Piezo stripes
+    for(let i=0;i<3;i++) ln(x-4+i*8,y-12,x-4+i*8,y+10,'rgba(255,255,255,.2)',2);
+    txt(x+8,y-5,'455','#fff',8,'middle','bold');
+    txt(x+8,y+6,'kHz','#ddd',7,'middle');
+    // 2 input pins (left) + 2 output pins (right) + GND
+    ln(x-12,y-8,x-20,y-8,'#888',1.5);   // IN pin
+    ln(x+28,y-8,x+36,y-8,'#888',1.5);   // OUT pin
+    ln(x+8,y+13,x+8,y+20,'#888',1.5);   // GND pin
+    txt(x-22,y-5,'IN','#4488dd',6,'end');
+    txt(x+38,y-5,'OUT','#4488dd',6,'start');
+    txt(x+8,y+24,'GND','#3333aa',6,'middle');
+  };
+  // LM386 IC DIP-8
+  const lm386IC = (x,y,w,h,clr) => {
+    rect(x,y,w,h,'#151515',clr,2,4);
+    // Notch
+    app(mk('ellipse',{cx:x+w/2,cy:y,rx:6,ry:4,fill:'#0a0a0a'}));
+    txt(x+w/2,y+h/2-4,'LM','#fff',8,'middle','bold');
+    txt(x+w/2,y+h/2+7,'386','#fff',8,'middle','bold');
+    // Pin numbers on left (1-4 top to bottom) and right (5-8 bottom to top)
+    const pinYs = [h/5, 2*h/5, 3*h/5, 4*h/5];
+    const leftPins  = ['①','②','③','④'];
+    const rightPins = ['⑧','⑦','⑥','⑤'];
+    pinYs.forEach((py,i) => {
+      ln(x-8,y+py,x,y+py,'#888',1.5);
+      ln(x+w,y+py,x+w+8,y+py,'#888',1.5);
+      txt(x-10,y+py,leftPins[i],'#aaa',6,'end');
+      txt(x+w+10,y+py,rightPins[i],'#aaa',6,'start');
+    });
+  };
+  // Hole in board
+  const hole = (x,y,cl='#a8a890') => {
+    app(mk('ellipse',{cx:x,cy:y,rx:2.8,ry:2.2,fill:cl,stroke:'#887860','stroke-width':'0.4'}));
+  };
+  // Coupling cap label
+  const coupLbl = (x,y,lbl,clr) => {
+    rect(x-9,y-6,18,12,'rgba(0,0,0,.3)',0,0,2);
+    txt(x,y,lbl,clr,6.5,'middle','bold');
+  };
+  // Value label near component
+  const valLbl = (x,y,lbl,clr) => txt(x,y,lbl,clr,7.5,'middle','bold');
+
+  // ══════════════════════════════════════════════
+  // BOARD BACKGROUND & STRUCTURE
+  // ══════════════════════════════════════════════
+  rect(0,0,W,H,'#e8dfc8');
+  rect(startX-10,0,COLS*CW+18,H,'#f2e8d0',0,0,0);
+
+  // Stage section backgrounds
+  const SECTS = [
+    {c1:1,  c2:11, fill:'rgba(77,182,172,.18)',  lbl:'SINTONÍA'},
+    {c1:12, c2:22, fill:'rgba(174,213,129,.18)', lbl:'AMP RF'},
+    {c1:23, c2:32, fill:'rgba(255,179,0,.13)',   lbl:'OSCILADOR'},
+    {c1:33, c2:41, fill:'rgba(206,147,216,.18)', lbl:'MEZCLADOR'},
+    {c1:42, c2:47, fill:'rgba(128,203,196,.18)', lbl:'FILTRO FI'},
+    {c1:48, c2:57, fill:'rgba(255,138,101,.18)', lbl:'DETECTOR'},
+    {c1:58, c2:63, fill:'rgba(240,98,146,.15)',  lbl:'AMP AUDIO'},
+  ];
+  SECTS.forEach(s => {
+    const x = cx(s.c1)-6, w = cx(s.c2)-cx(s.c1)+CW+10;
+    rect(x, 0, w, H, s.fill, 0, 0, 0);
+    txt(x+w/2, H-8, s.lbl, '#888', 7.5, 'middle', 'bold');
+    txt(x+w/2, 14, s.lbl, '#999', 7.5, 'middle', 'bold');
+  });
+
+  // Power rails
+  const railX = startX-10, railW = COLS*CW+18;
+  [[RY.vccT,'#ffdede','#cc0000','+'],[RY.gndT,'#dedeff','#0000cc','−']].forEach(([y,fill,tc,sym]) => {
+    rect(railX,y,railW,12,fill,'#bbb',0.5);
+    txt(railX-10,y+6,sym,tc,10,'middle','bold');
+  });
+  [[RY.gndB,'#dedeff','#0000cc','−'],[RY.vccB,'#ffdede','#cc0000','+']].forEach(([y,fill,tc,sym]) => {
+    rect(railX,y,railW,12,fill,'#bbb',0.5);
+    txt(railX-10,y+6,sym,tc,10,'middle','bold');
+  });
+  // Mid divider
+  rect(railX, RY.mid, railW, 11, '#cac4b0', 0);
+  txt(railX+railW/2, RY.mid+5.5, '─── CANAL CENTRAL ───', '#aaa', 6, 'middle');
+
+  // Holes
+  for(let c=1;c<=COLS;c++){
+    topRows.forEach(ry => hole(cx(c),ry));
+    botRows.forEach(ry => hole(cx(c),ry));
+  }
+  for(let c=1;c<=COLS;c+=2){
+    [RY.vccT+6,RY.gndT+6,RY.gndB+6,RY.vccB+6].forEach(ry=>hole(cx(c),ry,'#cc9999'));
+  }
+  // Row labels
+  ['a','b','c','d','e'].forEach((l,i)=>txt(startX-22,topRows[i],l,'#aaa',8));
+  ['f','g','h','i','j'].forEach((l,i)=>txt(startX-22,botRows[i],l,'#aaa',8));
+  // Col numbers every 5
+  for(let c=5;c<=COLS;c+=5) txt(cx(c),RY.mid+5.5,c,'#bbb',7);
+
+  // VCC bus vertical link (dashed red) across center for power distribution
+  [cx(19), cx(36), cx(58)].forEach(bx => {
+    ln(bx, RY.vccT+6, bx, RY.vccB+6, '#cc3333', 0.8, '4 3');
+  });
+  // GND bus vertical link (dashed blue)
+  [cx(9), cx(20), cx(35), cx(55)].forEach(bx => {
+    ln(bx, RY.gndT+6, bx, RY.gndB+6, '#2233cc', 0.8, '4 3');
+  });
+
+  // Generator input wires (from left edge → P1 probe area)
+  poly([[0, RY.a],[cx(3),RY.a]], '#22aa22', 3);
+  poly([[0, RY.gndT+6],[cx(4),RY.gndT+6]], '#111', 2);
+  txt(3, RY.a-8, 'RF IN', '#22aa22', 7, 'start', 'bold');
+
+  // Battery wires (to right battery symbol)
+  poly([[cx(62),RY.vccB+6],[W-14,RY.vccB+6],[W-14,H*0.44]], '#ff3333', 2.5);
+  poly([[cx(62),RY.gndB+6],[W-14,RY.gndB+6],[W-14,H*0.70]], '#111', 2.5);
+
+  // ══════════════════════════════════════════════
+  // STAGE 1 — SINTONÍA (cols 1-11)
+  // Tank circuit: L1 ∥ C1, output tapped via C_in to Q1
+  // ══════════════════════════════════════════════
+
+  // L1 — Ferrite antenna coil (primary: L1a, secondary: tapped)
+  coil(cx(3), cx(8), RY.c, '#7a5a10');
+  valLbl(cx(5.5), RY.c-22, 'L1  470µH  FERRITA', '#4db6ac');
+  // GND connection for L1 left end (antenna ground reference)
+  ln(cx(3), RY.c+8, cx(3), RY.e, '#3333aa', 1.2);
+  ln(cx(3), RY.e, cx(3), RY.gndT+6, '#3333aa', 1, '2 2');
+  txt(cx(3), RY.e+10, 'GND', '#3333aa', 6, 'middle');
+
+  // C1 — Variable capacitor in PARALLEL with L1 (forms LC tank)
+  // One end at cx(8) (hot end of L1), other to GND
+  capH(cx(8), cx(11), RY.d, '#1a66cc', true);
+  // Right plate of C1 → GND
+  ln(cx(11), RY.d, cx(11), RY.e, '#3333aa', 1.2);
+  ln(cx(11), RY.e, cx(11), RY.gndT+6, '#3333aa', 1, '2 2');
+  valLbl(cx(9.5), RY.d+20, 'C1  10–400pF  VAR', '#4fc3f7');
+  txt(cx(9.5), RY.d+30, '(DIAL DE SINTONÍA)', '#6688aa', 6.5, 'middle');
+
+  // Tank junction node (cx(8), row c) — hot end: label
+  app(mk('circle',{cx:cx(8),cy:RY.c,r:3,fill:'#ffdd44',stroke:'#aa9900','stroke-width':0.8}));
+  txt(cx(8)+8, RY.c-10, 'NODO LC', '#aa8800', 6, 'start');
+
+  // Wire: L1 right end (cx(8), row c) joins C1 left end (cx(8), row d) via column
+  ln(cx(8), RY.c+8, cx(8), RY.d, '#7a5a10', 1.2);
+
+  // C_in — Input coupling cap (100pF): TANK output → Q1 base
+  // Takes signal from cx(8) row b, routes to Q1 base at cx(16)
+  capH(cx(8), cx(10), RY.b, '#aa44cc');
+  coupLbl(cx(9), RY.b-14, '100p', '#aa44cc');
+  txt(cx(9), RY.b-24, 'C_IN  (ACOPLAMIENTO)', '#aa44cc', 6.5, 'middle');
+  // Wire from tank to C_in
+  ln(cx(8), RY.c, cx(8), RY.b, '#7a5a10', 1.2);
+  // Wire from C_in right to Q1 base
+  ln(cx(10), RY.b, cx(14), RY.b, '#22aa44', 1.5);
+
+  // ══════════════════════════════════════════════
+  // STAGE 2 — AMPLIFICADOR RF  (cols 12-22)
+  // Q1 BC547 NPN — Clase A — Av≈30
+  // R1=100kΩ bias | R3=4.7kΩ collector load | R2=1kΩ emitter | Ce=100nF bypass
+  // ══════════════════════════════════════════════
+
+  // Q1 transistor — centered at cx(16), row b
+  // Collector = left leg (cx(16)-6 ≈ col 15.6), Base = mid (cx(16)), Emitter = right (cx(16)+6)
+  tran(cx(16), RY.b, '#1a3a0a', 'Q1 BC547');
+  // Q1 legs connect into board rows
+  // Collector leg at cx(16)-6 → col 15 area
+  // Base leg at cx(16) → col 16
+  // Emitter leg at cx(16)+6 → col 17 area
+
+  // ── R3 (4.7kΩ) — COLLECTOR LOAD — from VCC to Q1 collector ──
+  // ★ This was MISSING in the original circuit — transistor could NOT amplify without it ★
+  {
+    const rcX = cx(15);
+    resV(rcX, RY.vccT+6, RY.b-12, ['ye','vi','rd','gd']); // 4.7kΩ = ye,vi,rd,gd
+    valLbl(rcX-22, (RY.vccT+RY.b)/2, 'R3', '#aed581');
+    valLbl(rcX-22, (RY.vccT+RY.b)/2+10, '4.7kΩ', '#aed581');
+    // Wire from R3 bottom to Q1 collector leg
+    ln(rcX, RY.b-12, rcX, RY.b, '#888', 1);
+    txt(rcX-22, (RY.vccT+RY.b)/2-10, 'CARGA', '#aed581', 6, 'middle');
+  }
+
+  // ── R1 (100kΩ) — BASE BIAS — from VCC to Q1 base ──
+  {
+    const rbX = cx(16);
+    // R1 from VCC top to Q1 base (vertically)
+    resV(rbX, RY.vccT+6, RY.b-12, ['bn','bk','ye','gd']); // 100kΩ
+    valLbl(rbX+18, (RY.vccT+RY.b)/2, 'R1', '#bcaaa4');
+    valLbl(rbX+18, (RY.vccT+RY.b)/2+10, '100kΩ', '#bcaaa4');
+    ln(rbX, RY.b-12, rbX, RY.b, '#888', 1);
+    txt(rbX+18, (RY.vccT+RY.b)/2-10, 'BIAS', '#bcaaa4', 6, 'middle');
+  }
+
+  // ── R2 (1kΩ) — EMITTER STABILIZATION — Q1 emitter to GND ──
+  // Emitter at cx(16)+6 ≈ col 17
+  // Wire goes DOWN from emitter through mid-divider to bottom half, then R2 to GND
+  {
+    const reX = cx(17);
+    // Wire from Q1 emitter (row b) down to bottom half
+    poly([[reX, RY.b+10],[reX, RY.mid-1]], '#888', 1.2);                    // top half → divider
+    ln(reX, RY.mid+11, reX, RY.g-8, '#888', 1.2);                           // divider → R2
+    resV(reX, RY.g-8, RY.g+18, ['bn','bk','rd','gd']);                      // 1kΩ
+    ln(reX, RY.g+18, reX, RY.gndB+6, '#2233cc', 1.2, '2 2');               // R2 to GND
+    valLbl(reX+16, RY.g+5, 'R2  1kΩ', '#bcaaa4');
+    txt(reX+16, RY.g+16, 'EMISOR', '#bcaaa4', 6.5, 'middle');
+
+    // ── Ce (100nF) — EMITTER BYPASS CAP — bypasses R2 for RF ──
+    capH(cx(18),cx(20), RY.h, '#2266aa');
+    ln(cx(18), RY.h, reX, RY.h, '#2266aa', 1);
+    ln(cx(18), RY.h, cx(18), RY.gndB+6, '#2233cc', 1, '2 2');
+    ln(cx(20), RY.h, cx(20), RY.gndB+6, '#2233cc', 1, '2 2');
+    coupLbl(cx(19), RY.h+14, '100nF', '#2266aa');
+    txt(cx(19), RY.h+24, 'Ce BYPASS', '#5588aa', 6.5, 'middle');
+    // ★ Ce bypasses R2 at RF frequencies → prevents degeneration
+  }
+
+  // ── C_c (100pF) — COLLECTOR COUPLING CAP — Q1 output → Q2 ──
+  // Q1 collector at cx(15), row b → C_c → wire to Q2 base at cx(34)
+  capH(cx(19), cx(22), RY.b, '#aa44cc');
+  // Wire from Q1 collector to C_c
+  ln(cx(15), RY.b, cx(19), RY.b, '#22aa44', 1.5);
+  // Wire from C_c to Q2 base (long run, goes via row a to avoid components)
+  poly([[cx(22),RY.b],[cx(26),RY.b]], '#22aa44', 1.5);
+  coupLbl(cx(20.5), RY.b-14, '100pF', '#aa44cc');
+  txt(cx(20.5), RY.b-24, 'C_C ACOPLAMIENTO', '#aa44cc', 6.5, 'middle');
+
+  // VCC label near R3/R1
+  txt(cx(14), RY.vccT+3, '+Vcc', '#cc3333', 7, 'start');
+
+  // ══════════════════════════════════════════════
+  // STAGE 3 — OSCILADOR COLPITTS (cols 23-32)
+  // Q3 + L2(47µH) + C2a(220pF) + C2b(100pF) — bottom half
+  // Genera: fRF + 455 kHz
+  // ══════════════════════════════════════════════
+
+  // Q3 — Colpitts oscillator transistor (bottom half, row f)
+  tran(cx(26), RY.f, '#2a1800', 'Q3');
+  valLbl(cx(26), RY.f-30, 'OSCILADOR COLPITTS', '#ffb300');
+
+  // L2 — Oscillator tank coil (47µH)
+  coil(cx(23), cx(29), RY.h, '#8a6010');
+  valLbl(cx(26), RY.h-14, 'L2  47µH', '#ffcc44');
+  // Wire: Q3 collector (cx(26)-6 ≈ cx(25.6)) to L2 left end (cx(23))
+  ln(cx(25), RY.f+10, cx(25), RY.h, '#ffb300', 1.5);
+  ln(cx(25), RY.h, cx(23), RY.h, '#ffb300', 1.5);
+  // L2 right end → VCC bottom rail (RF choke + supply)
+  ln(cx(29), RY.h, cx(29), RY.vccB+6, '#cc3333', 1, '2 2');
+  txt(cx(29), RY.vccB+3, '+V', '#cc3333', 6, 'middle');
+
+  // ── Colpitts capacitor divider: C2a ∥ C2b (feedback network) ──
+  // C2a (220pF) — from Q3 collector to emitter (across transistor)
+  capH(cx(23), cx(25), RY.i, '#1a66cc');
+  ln(cx(23), RY.h, cx(23), RY.i, '#ffb300', 1);   // from L2 left (=collector node)
+  ln(cx(25), RY.i, cx(27), RY.i, '#888', 1);
+  coupLbl(cx(24), RY.i+14, '220pF', '#4fc3f7');
+  txt(cx(24), RY.i+24, 'C2a', '#4fc3f7', 6.5, 'middle');
+
+  // C2b (100pF) — from emitter node to GND
+  capH(cx(27), cx(29), RY.i, '#1a66cc');
+  coupLbl(cx(28), RY.i+14, '100pF', '#4fc3f7');
+  txt(cx(28), RY.i+24, 'C2b', '#4fc3f7', 6.5, 'middle');
+
+  // ★ CORRECTED: Explicit GND connections for Colpitts caps ★
+  // C2a left end → GND (was MISSING in original)
+  ln(cx(23), RY.i, cx(23), RY.gndB+6, '#2233cc', 1.2, '2 2');
+  txt(cx(23), RY.j+8, 'GND', '#2233cc', 6, 'middle');
+  // C2b right end → GND (was MISSING in original)
+  ln(cx(29), RY.i, cx(29), RY.gndB+6, '#2233cc', 1.2, '2 2');
+  txt(cx(29), RY.j+8, 'GND', '#2233cc', 6, 'middle');
+
+  // Q3 emitter (right leg, cx(26)+6≈cx(26.4)) → junction between C2a and C2b at cx(27)
+  ln(cx(27), RY.f+10, cx(27), RY.i, '#ffb300', 1.2);
+  // Q3 base (mid, cx(26)) → feedback from C2a/C2b divider (feedback wire)
+  ln(cx(26), RY.f+10, cx(26), RY.i, '#cc8800', 1, '3 2');
+  txt(cx(25.5), RY.g+6, 'FB', '#cc8800', 6, 'middle'); // feedback label
+
+  // R_osc (47kΩ base bias for Q3)
+  resH(cx(23), cx(25), RY.g, ['ye','vi','or','gd']); // 47kΩ = ye,vi,or,gd
+  ln(cx(23), RY.g, cx(23), RY.vccB+6, '#cc3333', 1, '2 2');
+  valLbl(cx(24), RY.g-14, 'R_osc  47kΩ', '#bcaaa4');
+
+  // ── C_osc (100pF) — Oscillator OUTPUT coupling to Mixer ──
+  // OSC signal: from Q3 collector node at cx(25), row h
+  capH(cx(29), cx(31), RY.g, '#aa44cc');
+  ln(cx(25), RY.h, cx(25), RY.g, '#ffb300', 1.2);
+  ln(cx(25), RY.g, cx(29), RY.g, '#ffb300', 1.2);
+  // Wire from C_osc output to Q2 emitter (mixer injection)
+  poly([[cx(31),RY.g],[cx(31),RY.mid-1],[cx(36),RY.mid-1],[cx(36),RY.b+10]], '#ee9900', 1.5);
+  coupLbl(cx(30), RY.g-14, '100pF', '#aa44cc');
+  txt(cx(30), RY.g-24, 'C_OSC→MIXER', '#aa44cc', 6.5, 'middle');
+
+  // OSC frequency display
+  txt(cx(27.5), RY.f-42, 'fOSC = fRF + 455kHz', '#ffaa00', 7.5, 'middle', 'bold');
+
+  // ══════════════════════════════════════════════
+  // STAGE 4 — MEZCLADOR (cols 33-41)
+  // Q2 BC547 — mezcla RF + OSC → FI 455kHz
+  // R_mix=4.7kΩ collector load
+  // ══════════════════════════════════════════════
+
+  // Q2 mixer transistor — centered at cx(36), row b
+  tran(cx(36), RY.b, '#1a0a2a', 'Q2 MIXER');
+
+  // ── R_mix (4.7kΩ) — COLLECTOR LOAD for Q2 — ★ MISSING in original ★
+  {
+    const rmX = cx(35);
+    resV(rmX, RY.vccT+6, RY.b-12, ['ye','vi','rd','gd']); // 4.7kΩ
+    valLbl(rmX-22, (RY.vccT+RY.b)/2, 'R_mix', '#ce93d8');
+    valLbl(rmX-22, (RY.vccT+RY.b)/2+10, '4.7kΩ', '#ce93d8');
+    ln(rmX, RY.b-12, rmX, RY.b, '#888', 1);
+    txt(rmX-22, (RY.vccT+RY.b)/2-10, 'CARGA', '#ce93d8', 6, 'middle');
+  }
+
+  // Wire from Q1 output (via C_c at cx(22)) to Q2 base
+  poly([[cx(26),RY.b],[cx(34),RY.b]], '#22aa44', 1.5);
+  // Wire: OSC injection (from C_osc, arrived at cx(36) row b+10) to Q2 emitter
+  // OSC goes to emitter for "emitter injection" mixing
+  ln(cx(36), RY.b+10, cx(36), RY.g, '#ee9900', 1.2);
+  // Label for injection type
+  txt(cx(36)+18, RY.g, 'OSC→Emisor', '#ee9900', 6, 'start');
+
+  // Q2 emitter bypass R_emix (100Ω) to GND
+  ln(cx(37), RY.b+10, cx(37), RY.mid-1, '#888', 1);
+  ln(cx(37), RY.mid+11, cx(37), RY.g, '#888', 1);
+  resV(cx(37), RY.g, RY.j, ['bn','bk','bk','gd']); // 100Ω
+  ln(cx(37), RY.j, cx(37), RY.gndB+6, '#2233cc', 1, '2 2');
+  txt(cx(37)+12, RY.h, '100Ω', '#bcaaa4', 6, 'start');
+
+  // ── Signal flow Q2 collector → FI filter ──
+  // Q2 collector at cx(35), row b
+  poly([[cx(35),RY.b],[cx(35),RY.a],[cx(41),RY.a],[cx(41),RY.b]], '#4488dd', 1.5);
+
+  // fIF = fOSC − fRF label
+  txt(cx(38), RY.a-6, '|fOSC − fRF| = 455 kHz ✓', '#ce93d8', 7.5, 'middle', 'bold');
+
+  // ══════════════════════════════════════════════
+  // STAGE 5 — FILTRO FI 455kHz (cols 42-47)
+  // Filtro cerámico piezoeléctrico — BW ±4.5kHz
+  // ══════════════════════════════════════════════
+
+  fiFilter(cx(43), RY.b, '#1a5577');
+  valLbl(cx(43)+8, RY.b+28, 'FILTRO CERÁMICO FI', '#5eead4');
+  // FI filter GND pin → GND bus
+  ln(cx(43)+8, RY.b+20, cx(43)+8, RY.gndT+6, '#2233cc', 1, '2 2');
+  // Wire: Q2 → FI input (already done above via cx(41),row b)
+  ln(cx(41), RY.b, cx(43)-20, RY.b, '#4488dd', 1.5);
+
+  // FI output → to detector stage
+  ln(cx(43)+36, RY.b, cx(49), RY.b, '#4488dd', 1.5);
+  txt(cx(45.5), RY.b-12, '455 kHz  FI  (FIJA)', '#5eead4', 7.5, 'middle', 'bold');
+
+  // ══════════════════════════════════════════════
+  // STAGE 6 — DETECTOR AM (cols 48-57)
+  // CORRECTED: D1+R5+C3 correctly placed as RC envelope detector
+  // RV1 volume pot BEFORE LM386 (was misplaced in original)
+  // ══════════════════════════════════════════════
+
+  // ── D1 (1N4148) — Envelope detector diode ──
+  // Anode: cx(49), row b (from FI filter)
+  // Cathode: cx(52), row b (audio output node)
+  diode(cx(49), cx(53), RY.b, '#cc4444');
+  // Wire from FI output to D1 anode
+  ln(cx(49), RY.b, cx(49), RY.b, '#4488dd', 1);
+  txt(cx(51), RY.b-22, 'D1  1N4148  DETECTOR AM', '#ff8a65', 8, 'middle', 'bold');
+
+  // ── RC Filter: R5 (10kΩ) + C3 (10nF) — DETECTOR LOAD ──
+  // ★ CORRECTED: R5 and C3 now correctly placed AFTER D1 cathode ★
+  // R5: from D1 cathode (cx(53)) to GND — this is the AUDIO OUTPUT NODE
+  {
+    const detX = cx(53);
+    // R5 vertical from audio node down to GND
+    ln(detX, RY.b, detX, RY.c, '#ff8844', 1.5);           // wire from D1 cathode to R5
+    resV(detX, RY.c, RY.e, ['bn','bk','or','gd']);          // R5 = 10kΩ
+    ln(detX, RY.e, detX, RY.gndT+6, '#2233cc', 1.2, '2 2'); // R5 to GND
+    valLbl(detX+18, RY.d, 'R5  10kΩ', '#ff8a65');
+    txt(detX+18, RY.d+12, 'DETECTOR LOAD', '#ff8a65', 6, 'start');
+
+    // ★ Audio output node marker (the demodulated audio appears here) ★
+    app(mk('circle',{cx:detX,cy:RY.b,r:4,fill:'#ff8a65',stroke:'#cc3300','stroke-width':1}));
+    txt(detX, RY.b-14, 'AUDIO OUT', '#ff8a65', 6.5, 'middle', 'bold');
+  }
+
+  // C3 (10nF) — in PARALLEL with R5 — forms the τ=100µs filter
+  // ★ CORRECTED: C3 now directly in parallel with R5 ★
+  capV(cx(55), RY.b, RY.e, '#2266aa');
+  // Connect C3 top to audio node (cx(53), row b)
+  ln(cx(53), RY.b, cx(55), RY.b, '#ff8844', 1.2);
+  // Connect C3 bottom to GND
+  ln(cx(55), RY.e, cx(55), RY.gndT+6, '#2233cc', 1.2, '2 2');
+  coupLbl(cx(55)+18, RY.c+10, '10nF', '#2266aa');
+  valLbl(cx(55)+18, RY.c-2, 'C3', '#2266aa');
+  txt(cx(55)+18, RY.c+20, 'τ=R5×C3=100µs', '#4488aa', 6, 'start');
+
+  // ── C_agc (47µF) — AGC filter cap ──
+  capV(cx(53), RY.g, RY.j, '#1a66aa', true);
+  ln(cx(53), RY.b, cx(53), RY.mid-1, '#cc7700', 1, '2 2'); // audio node to C_agc
+  ln(cx(53), RY.mid+11, cx(53), RY.g, '#cc7700', 1, '2 2');
+  ln(cx(53), RY.j, cx(53), RY.gndB+6, '#2233cc', 1, '2 2');
+  valLbl(cx(53)+18, RY.h, 'C_AGC  47µF', '#ffb300');
+  txt(cx(53)+18, RY.h+12, 'AGC FILTER', '#cc8800', 6, 'start');
+
+  // ── AGC feedback: C_agc top → Q1 base (long dashed path) ──
+  poly([[cx(53),RY.mid-1],[cx(53),RY.a],[cx(16),RY.a],[cx(16),RY.vccT+6]], '#dd9933', 1, '5 3');
+  txt(cx(34), RY.a+8, '◄── AGC (realimentación automática de ganancia) ──►', '#997733', 7, 'middle');
+
+  // ── RV1 (10kΩ) — VOLUME POTENTIOMETER — between detector audio & LM386 ──
+  // ★ CORRECTED: now correctly placed BEFORE LM386 input ★
+  resH(cx(54), cx(56), RY.b, ['bn','bk','or','gd']); // 10kΩ
+  // Wiper (center) connects audio node to LM386 pin 3
+  ln(cx(53), RY.b, cx(54), RY.b, '#ff8844', 1.5); // from audio node to RV1
+  ln(cx(55), RY.b, cx(55), RY.vccT-2, '#cc7700', 0.8, '2 2'); // wiper indicator
+  valLbl(cx(55), RY.b-22, 'RV1  10kΩ  VOLUMEN', '#ffb300');
+  txt(cx(55), RY.b-32, '◄ CONTROL DE VOLUMEN ►', '#cc8800', 6.5, 'middle');
+
+  // ══════════════════════════════════════════════
+  // STAGE 7 — AMPLIFICADOR DE AUDIO LM386 (cols 58-63)
+  // Pin map: 1=Gain, 2=IN−, 3=IN+, 4=GND, 5=OUT, 6=Vcc, 7=Bypass, 8=Gain
+  // CORRECTED: C4 now at OUTPUT (pin 5), C5 bypass on Vcc pin
+  // ══════════════════════════════════════════════
+
+  // LM386 IC body
+  {
+    const icX = cx(58), icY = RY.a+2, icW = CW*4, icH = RY.e-RY.a-4;
+    lm386IC(icX, icY, icW, icH, '#f06292');
+    valLbl(icX+icW/2, icY+icH+16, 'LM386  AMP AUDIO  DIP-8', '#f06292');
+
+    // LM386 power connections
+    // Pin 6 (Vcc) — right side top pin
+    const pin6Y = icY + icH/5;
+    ln(icX+icW+8, pin6Y, cx(62), pin6Y, '#cc3333', 1.5);
+    ln(cx(62), pin6Y, cx(62), RY.vccT+6, '#cc3333', 1, '2 2');
+    txt(cx(62)+3, pin6Y-8, 'Vcc', '#cc3333', 6.5, 'start');
+
+    // Pin 4 (GND) — left side bottom pin
+    const pin4Y = icY + 4*icH/5;
+    ln(icX-8, pin4Y, cx(57), pin4Y, '#2233cc', 1.5);
+    ln(cx(57), pin4Y, cx(57), RY.gndT+6, '#2233cc', 1, '2 2');
+    txt(cx(57)-3, pin4Y-8, 'GND', '#2233cc', 6.5, 'end');
+
+    // Pin 3 (IN+) — left side middle upper — receives audio from RV1
+    const pin3Y = icY + 2*icH/5;
+    // ★ CORRECTED: Volume pot RV1 wiper correctly connected to pin 3 ★
+    ln(cx(56), RY.b, icX-8, pin3Y, '#ff8844', 1.5);
+    txt(icX-10, pin3Y-8, 'IN+', '#ff8844', 6, 'end');
+
+    // Pin 2 (IN−) — left side middle lower — connected to GND
+    const pin2Y = icY + 3*icH/5;
+    ln(icX-8, pin2Y, cx(57), pin2Y, '#2233cc', 1.2);
+    txt(icX-10, pin2Y-8, 'IN−→GND', '#778', 6, 'end');
+
+    // Pin 7 (Bypass) — right side 2nd pin — 47µF bypass cap to GND
+    const pin7Y = icY + 2*icH/5;
+    ln(icX+icW+8, pin7Y, cx(62)+4, pin7Y, '#668833', 1.2);
+    txt(icX+icW+10, pin7Y-8, 'Bypass→C5', '#668833', 6, 'start');
+
+    // Pins 1+8 (Gain) — short circuit or 10µF for max gain
+    const pin1Y = icY + icH/5;  // left top
+    const pin8Y = icY + icH/5;  // right top (same height)
+    // C_gain (10µF) between pins 1 and 8 for 200x gain
+    capH(icX-14, icX-8, pin1Y, '#2266aa');
+    coupLbl(icX-11, pin1Y-14, 'C6 10µF', '#2266aa');
+    txt(icX-11, pin1Y-24, 'GANANCIA', '#4488aa', 6, 'middle');
+
+    // ── Pin 5 (OUTPUT) — C4 coupling cap → Speaker ──
+    // ★ CORRECTED: C4 now at OUTPUT of LM386 (was incorrectly inside IC body before) ★
+    const pin5Y = icY + 4*icH/5; // right side bottom pin
+    ln(icX+icW+8, pin5Y, cx(61)+2, pin5Y, '#ff8844', 2);
+    capH(cx(61), cx(62)+4, pin5Y, '#1a66aa');
+    // Wire after C4 → speaker output at right edge
+    poly([[cx(62)+4, pin5Y],[W-14, pin5Y],[W-14, H*0.35]], '#ff7722', 2);
+    coupLbl(cx(61.5), pin5Y-14, '220µF', '#1a66aa');
+    txt(cx(61.5), pin5Y-24, 'C4  SALIDA', '#6688aa', 6, 'middle');
+    txt(cx(61.5), pin5Y+14, 'SPKR ►', '#ff7722', 6, 'middle', 'bold');
+  }
+
+  // ── C5 (47µF) — LM386 VCC BYPASS CAP — ★ MISSING in original ★
+  capV(cx(62), RY.f, RY.i, '#1a66aa', true);
+  ln(cx(62), RY.vccB+6, cx(62), RY.i, '#cc3333', 1, '2 2');
+  ln(cx(62), RY.f, cx(62), RY.gndB+6, '#2233cc', 1, '2 2');
+  valLbl(cx(62)+16, RY.g+8, 'C5  47µF', '#80deea');
+  txt(cx(62)+16, RY.g+20, 'VCC BYPASS', '#4488aa', 6, 'start');
+  txt(cx(62)+16, RY.g-4, 'LM386', '#4488aa', 6, 'start');
+
+  // ── Battery symbol ──
+  {
+    const bx=W-46, by=H*0.42;
+    rect(bx,by,32,66,'#ff8c00','#cc5500',1.5,4);
+    rect(bx+8,by-7,16,8,'#cc5500',0,0,2);
+    txt(bx+16,by+33,'9V','#fff',14,'middle','bold');
+    txt(bx+16,by+49,'PP3','rgba(255,255,255,.65)',9,'middle');
+    txt(bx+8,by+10,'+','#fff',12,'middle','bold');
+    txt(bx+22,by+54,'−','#fff',12,'middle');
+  }
+
+  // ── Speaker symbol ──
+  {
+    const sx=W-46, sy=H*0.10;
+    app(mk('ellipse',{cx:sx+16,cy:sy+17,rx:17,ry:17,fill:'#111',stroke:'#444','stroke-width':1.5}));
+    app(mk('ellipse',{cx:sx+16,cy:sy+17,rx:11,ry:11,fill:'#1a1a1a'}));
+    app(mk('ellipse',{cx:sx+16,cy:sy+17,rx:4,ry:4,fill:'#252525'}));
+    // Sound waves
+    for(let r=1;r<=3;r++){
+      app(mk('path',{d:`M${sx+33} ${sy+17-r*5} Q${sx+38} ${sy+17},${sx+33} ${sy+17+r*5}`,
+        fill:'none',stroke:r===1?'#00e5aa':'rgba(0,229,170,'+(0.6-r*.15)+')',
+        'stroke-width':r===1?1.5:1,'stroke-linecap':'round'}));
+    }
+    txt(sx+16,sy+37,'8Ω/0.25W','#778',7,'middle');
+    txt(sx+16,sy+47,'ALTAVOZ','#556',6,'middle');
+  }
+
+  // ══════════════════════════════════════════════
+  // PROBE MEASUREMENT POINTS
+  // ══════════════════════════════════════════════
+  const PROBE_POSITIONS = [
+    {col:5,  row:RY.a, idx:0, clr:'#4db6ac'},  // P1: Antenna
+    {col:10, row:RY.b, idx:1, clr:'#4fc3f7'},  // P2: LC tank output
+    {col:18, row:RY.b, idx:2, clr:'#aed581'},  // P3: Q1 collector (after R3)
+    {col:27, row:RY.g, idx:3, clr:'#ffb300'},  // P4: Oscillator output
+    {col:45, row:RY.b, idx:4, clr:'#ce93d8'},  // P5: FI filter output
+    {col:53, row:RY.b, idx:5, clr:'#ff8a65'},  // P6: Detector audio out
+    {col:61, row:RY.b, idx:6, clr:'#f06292'},  // P7: LM386 audio out
+  ];
+  PROBE_POSITIONS.forEach(p => {
+    const px = cx(p.col), py = p.row;
+    const g = document.createElementNS(NS,'g');
+    g.setAttribute('cursor','pointer');
+    g.setAttribute('onclick',`setProbe(${p.idx})`);
+    g.setAttribute('id',`pd-${p.idx}`);
+
+    const wire = mk('line',{x1:px,y1:py-8,x2:px,y2:2,stroke:p.clr,'stroke-width':0.8,'stroke-dasharray':'3 2',opacity:'0.4'});
+    const outer = mk('circle',{cx:px,cy:py,r:7,fill:p.clr,stroke:'#111','stroke-width':1.5,opacity:'0.8'});
+    const inner = mk('circle',{cx:px,cy:py,r:2.5,fill:'#111'});
+    const lbl = mk('text',{x:px,y:py-13,'text-anchor':'middle',fill:p.clr,'font-size':8.5,'font-weight':'bold','font-family':'JetBrains Mono,monospace'});
+    lbl.textContent = `P${p.idx+1}`;
+
+    g.appendChild(wire); g.appendChild(outer); g.appendChild(inner); g.appendChild(lbl);
+    svg.appendChild(g);
+  });
+
+  // CH labels
+  txt(cx(8),  H/2-6, 'CH1 Generador', '#ffff44', 7.5, 'middle', 'bold');
+  txt(cx(45), H/2-6, 'CH2 Sonda activa', '#00e5aa', 7.5, 'middle', 'bold');
+}
+
+// ══════════════════════════════════════════════
+//  OSCILLOSCOPE
+// ══════════════════════════════════════════════
+function resizeScope(){
+  const cv = document.getElementById('oscillo');
+  const wrap = cv.parentElement;
+  cv.width = wrap.clientWidth || 200;
+  cv.height = wrap.clientHeight || 150;
+}
+
+function drawScope(){
+  const cv = document.getElementById('oscillo');
+  if(!cv || !cv.width) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  const {t, power:on, probe:pi, freq:f, amp:A, mod:m} = S;
+
+  ctx.fillStyle = '#020a02';
+  ctx.fillRect(0,0,W,H);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(0,180,0,.06)';
+  ctx.lineWidth = 0.5;
+  for(let i=1;i<10;i++){ctx.beginPath();ctx.moveTo(i*W/10,0);ctx.lineTo(i*W/10,H);ctx.stroke();}
+  for(let i=1;i<8;i++){ctx.beginPath();ctx.moveTo(0,i*H/8);ctx.lineTo(W,i*H/8);ctx.stroke();}
+
+  ctx.strokeStyle='rgba(0,220,0,.2)';ctx.lineWidth=.6;
+  ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(W/2,0);ctx.lineTo(W/2,H);ctx.stroke();
+
+  // Divider
+  ctx.strokeStyle='rgba(255,255,255,.05)';ctx.lineWidth=.5;
+  ctx.setLineDash([3,3]);
+  ctx.beginPath();ctx.moveTo(0,H*0.5);ctx.lineTo(W,H*0.5);ctx.stroke();
+  ctx.setLineDash([]);
+
+  if(!on){
+    ctx.fillStyle='rgba(0,100,0,.5)';ctx.font='11px JetBrains Mono,monospace';
+    ctx.textAlign='center';ctx.fillText('── CIRCUITO APAGADO ──',W/2,H/2+4);
+    return;
+  }
+
+  const mo = m/100;
+  const ph = px => (px/W)*Math.PI*10;
+
+  // ── CH1: AM signal (top half) ──
+  const c1y = H*0.25;
+  ctx.beginPath();ctx.strokeStyle='#eeee00';ctx.lineWidth=1.8;
+  ctx.shadowColor='#ffff00';ctx.shadowBlur=5;
+  for(let px=0;px<W;px++){
+    const p=ph(px);
+    const audio = Math.sin(p*0.6+t*0.03);
+    const env = 1 + mo*audio;
+    const rf = Math.sin(p*8+t*1.2)*env*(A/10)*0.32;
+    const y = c1y - rf*H*0.38;
+    px===0?ctx.moveTo(px,y):ctx.lineTo(px,y);
+  }
+  ctx.stroke();ctx.shadowBlur=0;
+
+  // ── CH2: probe signal (bottom half) ──
+  const c2y = H*0.75;
+  const type = PROBES[pi].type;
+  ctx.beginPath();ctx.strokeStyle='#00e5aa';ctx.lineWidth=1.8;
+  ctx.shadowColor='#00e5aa';ctx.shadowBlur=5;
+  for(let px=0;px<W;px++){
+    const p=ph(px);
+    const audio = Math.sin(p*0.6+t*0.03);
+    const env = 1 + mo*audio;
+    let y;
+    switch(type){
+      case 'ant':
+        y = c2y - (Math.sin(p*8+t)*env*(A/10)*0.08 + (Math.random()-.5)*H*.02);
+        break;
+      case 'lc':
+        y = c2y - Math.sin(p*8+t)*env*(A/10)*0.14;
+        break;
+      case 'rf':
+        y = c2y - Math.sin(p*8+t)*env*(A/10)*0.30;
+        break;
+      case 'osc':
+        y = c2y - Math.sin(p*8.5+t*1.15)*(A/10)*0.38;
+        break;
+      case 'fi':
+        y = c2y - Math.sin(p*4+t)*env*(A/10)*0.30;
+        break;
+      case 'det':{
+        const env2 = Math.abs(1+mo*audio)*(A/10)*0.32;
+        y = c2y - Math.abs(Math.sin(p*4+t))*env2;
+        break;
+      }
+      case 'aud':
+        y = c2y - Math.sin(p*0.6+t*0.03)*(A/10)*0.36*(S.amp/5);
+        break;
+      default: y=c2y;
+    }
+    px===0?ctx.moveTo(px,Math.max(H*0.5+3,Math.min(H-3,y))):ctx.lineTo(px,Math.max(H*0.5+3,Math.min(H-3,y)));
+  }
+  ctx.stroke();ctx.shadowBlur=0;
+}
+
+// ══════════════════════════════════════════════
+//  UI BUILDERS
+// ══════════════════════════════════════════════
+function buildStagePills(){
+  const bar = document.getElementById('stagePills');
+  const labels = ['ANTENA','SINTONÍA','AMP RF','OSCILADOR','FI 455k','DETECTOR','AUDIO'];
+  labels.forEach((l,i)=>{
+    const b = document.createElement('div');
+    b.className = 'stage-pill';
+    b.id = 'sp-'+i;
+    b.textContent = l;
+    b.style.borderColor = STAGE_COLORS[i]+'66';
+    b.onclick = ()=>setProbe(i);
+    bar.appendChild(b);
+  });
+}
+
+function buildProbeBar(){
+  const bar = document.getElementById('probeBar');
+  PROBES.forEach(p=>{
+    const b = document.createElement('button');
+    b.className = 'pr-btn';
+    b.id = 'prb-'+p.id;
+    b.textContent = p.lbl;
+    b.style.borderColor = STAGE_COLORS[p.id]+'55';
+    b.onclick = ()=>setProbe(p.id);
+    bar.appendChild(b);
+  });
+}
+
+// ══════════════════════════════════════════════
+//  INFO PANEL
+// ══════════════════════════════════════════════
+function renderCompTab(){
+  const ci = COMP_INFO[S.probe];
+  const clr = ci.color;
+  const badges = ci.badges.map(b=>`<span class="ccb-badge" style="background:${b.c}22;border:1px solid ${b.c}55;color:${b.c}">${b.txt}</span>`).join('');
+  const params = ci.params.map(p=>`<div style="font-size:9px;color:var(--white2);padding:2px 0;border-bottom:1px solid var(--border)">${p}</div>`).join('');
+
+  return `
+    <div class="comp-card-big">
+      <div class="ccb-head" style="background:${clr}15;border-bottom:1px solid ${clr}33">
+        <div class="ccb-icon" style="background:${clr}22;color:${clr}">${ci.icon}</div>
+        <div>
+          <div class="ccb-title">${ci.name}</div>
+          <div class="ccb-val">${ci.val}</div>
+        </div>
+      </div>
+      <div class="ccb-body">
+        <div class="ccb-section">
+          <div class="ccb-section-title">¿QUÉ ES?</div>
+          <div class="ccb-text">${ci.funcion}</div>
+        </div>
+        <div class="ccb-section">
+          <div class="ccb-section-title">FÓRMULA CLAVE</div>
+          <div class="ccb-formula">${ci.formula}</div>
+        </div>
+        <div class="ccb-section">
+          <div class="ccb-section-title">¿CÓMO FUNCIONA AQUÍ?</div>
+          <div class="ccb-text">${ci.como}</div>
+        </div>
+        <div class="ccb-section">
+          <div class="ccb-section-title">PARÁMETROS TÉCNICOS</div>
+          <div style="border:1px solid var(--border2);border-radius:4px;overflow:hidden;margin-top:4px">${params}</div>
+        </div>
+        <div class="ccb-badge-row">${badges}</div>
+      </div>
+    </div>`;
+}
+
+function renderFlowTab(){
+  return FLOW_INFO.map((fi,i)=>`
+    <div class="flow-item ${S.probe===i?'active':''}" onclick="setProbe(${i})">
+      <div class="fi-num" style="background:${fi.color}22;color:${fi.color};border:1px solid ${fi.color}44">
+        ${i+1}
+      </div>
+      <div class="fi-content">
+        <div class="fi-name" style="color:${S.probe===i?fi.color:''}">${fi.name}</div>
+        <div class="fi-desc">${fi.desc}</div>
+      </div>
+    </div>`).join('');
+}
+
+function switchTab(tab){
+  S.tab = tab;
+  ['comp','flow','guide'].forEach(t=>{
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+  });
+  renderInfo();
+}
+
+function renderInfo(){
+  const body = document.getElementById('infoBody');
+  if(S.tab==='comp')  body.innerHTML = renderCompTab();
+  else if(S.tab==='flow') body.innerHTML = renderFlowTab();
+  else body.innerHTML = GUIDE_CONTENT;
+}
+
+// ══════════════════════════════════════════════
+//  PROBE SELECTION
+// ══════════════════════════════════════════════
+function setProbe(idx){
+  S.probe = idx;
+  const p = PROBES[idx];
+  const clr = STAGE_COLORS[idx];
+
+  // Update probe bar
+  document.querySelectorAll('.pr-btn').forEach((b,i)=>{
+    b.classList.toggle('active', i===idx);
+    if(i===idx){b.style.background=clr+'33';b.style.color='#000';b.style.borderColor=clr;}
+    else{b.style.background='';b.style.color='';b.style.borderColor=STAGE_COLORS[i]+'55';}
+  });
+
+  // Update stage pills
+  document.querySelectorAll('.stage-pill').forEach((b,i)=>{
+    b.classList.toggle('active',i===idx);
+    if(i===idx){b.style.background=clr;b.style.borderColor=clr;b.style.color='#000';}
+    else{b.style.background='';b.style.borderColor=STAGE_COLORS[i]+'55';b.style.color='';}
+  });
+
+  // Update probe dots on breadboard
+  document.querySelectorAll('.probe-pt circle:first-of-type,[id^="pd-"]').forEach(g=>{});
+  for(let i=0;i<7;i++){
+    const dot = document.getElementById('pd-'+i);
+    if(!dot) continue;
+    const circles = dot.querySelectorAll('circle');
+    circles[0].setAttribute('opacity', i===idx?'1':'0.5');
+    circles[0].setAttribute('r', i===idx?'9':'7');
+  }
+
+  // CH2 label
+  document.getElementById('ch2tag').textContent = p.ch2;
+
+  // Stage badge
+  const stageBadge = document.getElementById('stageBadge');
+  if(stageBadge){ stageBadge.textContent=p.short.toUpperCase(); stageBadge.style.borderColor=clr; stageBadge.style.color=clr; }
+
+  // Update info panel
+  renderInfo();
+}
+
+// ══════════════════════════════════════════════
+//  CONTROLS
+// ══════════════════════════════════════════════
+function setFreq(v){
+  S.freq=v;
+  const k=(v/1000).toFixed(1);
+  document.getElementById('gFreq').textContent=k;
+  document.getElementById('vFreq').textContent=k+'k';
+  document.getElementById('sFreqMeas').textContent=k+'kHz';
+  document.getElementById('sTdiv').textContent=v>2000?'200µs':v>1000?'500µs':'1ms';
+  simulateCircuitBehavior();
+}
+
+function setAmp(v){
+  S.amp=v/10;
+  const val=(v/10).toFixed(1);
+  document.getElementById('gAmp').textContent=val;
+  document.getElementById('vAmp').textContent=val+'V';
+  updateSNR();
+  simulateCircuitBehavior();
+}
+
+function setMod(v){
+  S.mod=v;
+  document.getElementById('gMod').textContent=v;
+  document.getElementById('vMod').textContent=v+'%';
+  simulateCircuitBehavior();
+}
+
+function setStation(v){
+  S.station=v;
+  document.getElementById('vStation').textContent=v;
+  document.getElementById('sOsc').textContent=(v+455)+'kHz';
+  // Find nearest station name
+  const stations = [[540,'COLMENA'],[630,'RCN'],[810,'CARACOL'],[1000,'EMISORA 1000'],[1090,'RADIO UNO'],[1260,'TODELAR'],[1500,'ONDAS META']];
+  const near = stations.reduce((a,b)=>Math.abs(b[0]-v)<Math.abs(a[0]-v)?b:a);
+  const name = Math.abs(near[0]-v)<40 ? `${near[1]} ${near[0]}kHz` : `AM ${v} kHz`;
+  document.getElementById('stationTag').textContent='◈ EMISORA: '+name;
+  simulateCircuitBehavior();
+}
+
+function updateSNR(){
+  const snr = S.power ? Math.round(18+S.amp*2.5+Math.random()) : 0;
+  document.getElementById('sSNR').textContent=snr+'dB';
+}
+
+function togglePower(){
+  S.power = !S.power;
+  const btn = document.getElementById('pwrBtn');
+  const led = document.getElementById('led');
+  const ledTxt = document.getElementById('ledTxt');
+  btn.textContent = S.power?'⏻ ON':'⏻ OFF';
+  btn.classList.toggle('off',!S.power);
+  led.classList.toggle('off',!S.power);
+  ledTxt.textContent = S.power?'ENCENDIDO':'APAGADO';
+  simulateCircuitBehavior();
+}
+
+function showHelp(){ document.getElementById('helpOverlay').classList.add('show'); }
+function hideHelp(){ document.getElementById('helpOverlay').classList.remove('show'); }
+
+// ══════════════════════════════════════════════
+//  ANIMATION LOOP
+// ══════════════════════════════════════════════
+function loop(){
+  S.t += S.power ? 0.07 : 0;
+  drawScope();
+  simulateCircuitBehavior();
+  if(Math.floor(S.t*10)%12===0) updateSNR();
+  requestAnimationFrame(loop);
+}
+
+function updateCircuitSimulation(){
+  const svg = document.getElementById('bb');
+  
+  // Limpiar indicadores antiguos
+  document.querySelectorAll('.circuit-indicator').forEach(el => el.remove());
+  
+  if(!S.power) return;
+  
+  // Helper para agregar etiquetas de voltaje
+  const addVoltageLabel = (cx, cy, volts, id) => {
+    const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+    label.setAttribute('class','circuit-indicator');
+    label.setAttribute('x', cx);
+    label.setAttribute('y', cy);
+    label.setAttribute('font-size', '6');
+    label.setAttribute('fill', '#33ddff');
+    label.setAttribute('font-weight', 'bold');
+    label.setAttribute('text-anchor', 'middle');
+    label.setAttribute('background', 'rgba(0,100,200,0.9)');
+    label.textContent = `${volts}V`;
+    svg.appendChild(label);
+  };
+  
+  // Helper para agregar líneas de flujo de señal animadas
+  const addSignalFlow = (x1, y1, x2, y2) => {
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('class','circuit-indicator signal-flow');
+    line.setAttribute('x1', x1);
+    line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2);
+    line.setAttribute('y2', y2);
+    line.setAttribute('stroke', '#00ff88');
+    line.setAttribute('stroke-width', '0.8');
+    svg.appendChild(line);
+  };
+  
+  // Puntos de medida con voltajes realistas
+  const vcc = 9;
+  const v1 = 0.05 + (S.amp * 0.0005); // Señal de antena (µV)
+  const v2 = 0.15 + (S.amp * 0.001); // Después de LC
+  const v3 = 0.5 + (S.amp * 0.03); // Después de Amp RF
+  const v4 = vcc * 0.5; // Oscilador (referencia)
+  const v5 = 0.8; // FI
+  const v6 = 0.2 * (1 + Math.sin(S.t)); // Audio detector
+  const v7 = 0.5 + S.amp * 0.02; // Audio amplificado
+  
+  // Posiciones en el SVG (aproximadas)
+  const sx = 50, startX = 50;
+  const CW = 14.5;
+  const cx = c => startX + (c - 1) * CW;
+  const RY = { a:40, b:54, c:68, d:82, e:96, f:122, g:136, h:150, i:164, j:178 };
+  
+  // Agregar indicadores de voltaje en puntos clave
+  addVoltageLabel(cx(5.5), RY.c - 35, v1.toFixed(3), 'p1');
+  addVoltageLabel(cx(9), RY.d - 30, v2.toFixed(2), 'p2');
+  addVoltageLabel(cx(15), RY.b - 45, v3.toFixed(2), 'p3');
+  addVoltageLabel(cx(24), RY.f - 20, v4.toFixed(1), 'p4');
+  addVoltageLabel(cx(40), RY.b - 45, v5.toFixed(2), 'p5');
+  addVoltageLabel(cx(48), RY.e + 25, v6.toFixed(2), 'p6');
+  addVoltageLabel(cx(57), RY.b - 45, v7.toFixed(2), 'p7');
+  
+  // Agregar líneas de flujo de señal animadas
+  addSignalFlow(cx(3), RY.a, cx(8), RY.c);    // Antena a LC
+  addSignalFlow(cx(11), RY.b - 14, cx(13), RY.b);  // LC a Q1
+  addSignalFlow(cx(20), RY.b - 16, cx(31), RY.b);  // Q1 a Mezclador
+  addSignalFlow(cx(26), RY.g + 12, cx(31), RY.g);  // OSC a Mezclador
+  addSignalFlow(cx(37), RY.c - 12, cx(39), RY.c);  // Mezclador a FI
+  addSignalFlow(cx(46), RY.c, cx(50), RY.c);       // FI a Detector
+  addSignalFlow(cx(53), RY.b - 16, cx(56), RY.b);  // Detector a Audio
+}
+
+function redrawCircuitWires(){
+  const svg = document.getElementById('bb');
+  if(!S.power) return;
+  
+  // Cambiar opacidad y color de cables según estado
+  const wires = svg.querySelectorAll('polyline[stroke="#22aa44"], polyline[stroke="#ff7722"]');
+  wires.forEach(wire => {
+    const opacity = S.power ? '1' : '0.3';
+    const color = wire.getAttribute('stroke');
+    wire.style.opacity = opacity;
+    
+    if(S.power){
+      // Agregar glow dinámico
+      wire.style.filter = 'drop-shadow(0 0 2px ' + color + ')';
+    }
+  });
+}
+
+function simulateCircuitBehavior(){
+  updateCircuitSimulation();
+  redrawCircuitWires();
+}
+function initBreadboardZoom(){
+  const svg = document.getElementById('bb');
+  const wrap = document.querySelector('.bb-wrap');
+  let isZooming = false;
+  let originalViewBox = "0 0 980 340";
+  
+  wrap.addEventListener('mouseenter', () => {
+    isZooming = true;
+    svg.classList.add('zoomed');
+  });
+  
+  wrap.addEventListener('mouseleave', () => {
+    isZooming = false;
+    svg.classList.remove('zoomed');
+    svg.setAttribute('viewBox', originalViewBox);
+  });
+  
+  wrap.addEventListener('mousemove', (e) => {
+    if(!isZooming) return;
+    
+    const rect = wrap.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    
+    // Zoom 3.5x para mejor visibilidad
+    const zoomLevel = 3.5;
+    const origW = 980, origH = 340;
+    const newW = origW / zoomLevel;
+    const newH = origH / zoomLevel;
+    
+    // Calcular pan para centrar en el mouse
+    const minX = Math.max(0, x * origW - x * newW);
+    const minY = Math.max(0, y * origH - y * newH);
+    
+    const finalX = Math.min(minX, origW - newW);
+    const finalY = Math.min(minY, origH - newH);
+    
+    svg.setAttribute('viewBox', `${finalX} ${finalY} ${newW} ${newH}`);
+  });
+}
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+window.addEventListener('load',()=>{
+  buildStagePills();
+  buildProbeBar();
+  buildBB();
+  simulateCircuitBehavior();
+  resizeScope();
+  renderInfo();
+  initBreadboardZoom();
+  setProbe(5); // default to detector
+  loop();
+});
+window.addEventListener('resize', resizeScope);
+</script>
+
+<!-- Footer con crédito de autor -->
+<div style="position:fixed;top:140px;left:50%;transform:translateX(-50%);padding:8px 20px;background:rgba(11,13,20,0.92);border:1px solid #252a3d;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#6b7590;letter-spacing:1px;backdrop-filter:blur(8px);text-align:center;z-index:50">
+  <div style="margin-bottom:2px;color:#4a5268;font-weight:600;font-size:11px">📻 SIMULADOR: RADIO AM SUPERHETERODINA</div>
+  <div style="color:#5a6a8a;font-size:9px">Hecho por: <span style="color:#00e5aa;font-weight:600">Daniel Jiménez</span> | CI: <span style="color:#ffb300;font-weight:600">27.344.954</span> | Materia: <span style="color:#ce93d8;font-weight:600">Teleproceso</span></div>
+</div>
+
+</body>
+</html>
